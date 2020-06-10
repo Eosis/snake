@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::io::stdin;
 
 struct Game {
     pub snake: Snake,
@@ -66,7 +67,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Game::new(20, 20);
     game.apples = vec![Apple { location: (4, 4) }];
     game.render_with_border();
+
+    loop_game(game);
     Ok(())
+}
+
+fn loop_game(mut game: Game) -> ! {
+    let mut line = String::new();
+    loop {
+        game.render_with_border();
+        let _ = stdin().read_line(&mut line).unwrap();
+    }
 }
 
 #[cfg(test)]
