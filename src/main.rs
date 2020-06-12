@@ -13,6 +13,7 @@ struct Game {
 
 struct Snake {
     body: VecDeque<(usize, usize)>,
+    confines: (usize, usize),
 }
 
 struct Apple {
@@ -24,6 +25,7 @@ impl Game {
         Game {
             snake: Snake {
                 body: VecDeque::from(vec![(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]),
+                confines: (height, width),
             },
             apples: vec![],
             rendered: vec![vec![' '; width]; height],
@@ -82,6 +84,7 @@ impl Snake {
     pub fn from_body(body: Vec<(usize, usize)>) -> Self {
         Snake {
             body: VecDeque::from(body),
+            confines: (20, 20),
         }
     }
 
@@ -90,9 +93,12 @@ impl Snake {
         let (dy, dx) = Snake::advancement_to_add(direction);
         let first = self.body.front().unwrap();
         let (y, x) = (first.0 as i32, first.1 as i32);
-        let new = ((y + dy) as usize, (x + dx) as usize);
-        self.body.push_front(new);
-        self.body.pop_back();
+        let new = (y + dy, x + dx);
+        if !self.dead_at(new) {
+            let new = ((y + dy) as usize, (x + dx) as usize);
+            self.body.push_front(new);
+            self.body.pop_back();
+        };
     }
 
     fn advancement_to_add(direction: Direction) -> (i32, i32) {
@@ -102,6 +108,10 @@ impl Snake {
             Direction::Down => (1, 0),
             Direction::Left => (0, -1),
         }
+    }
+
+    fn dead_at(&self, (y, x): (i32, i32)) -> bool {
+        y < 0 || x < 0 || y >= self.confines.0 as i32 || x >= self.confines.1 as i32
     }
 }
 
@@ -134,7 +144,6 @@ impl Snake {
 fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Game::new(20, 20);
     game.apples = vec![Apple { location: (4, 4) }];
-    game.render_with_border();
 
     loop_game(game);
     #[allow(unreachable_code)]
