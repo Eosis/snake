@@ -21,10 +21,15 @@ struct Apple {
 }
 
 impl Game {
-    pub fn new(width: usize, height: usize) -> Game {
+    pub fn new(width: usize, height: usize, snake_body: &[(i32, i32)]) -> Game {
         Game {
             snake: Snake {
-                body: VecDeque::from(vec![(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]),
+                body: VecDeque::from(
+                    Vec::from(snake_body)
+                        .iter()
+                        .map(|(y, x)| (*y as usize, *x as usize))
+                        .collect::<Vec<_>>(),
+                ),
                 confines: (height, width),
             },
             apples: vec![],
@@ -77,13 +82,26 @@ impl Game {
             self.rendered[y][x] = 'O';
         }
     }
+
+    #[cfg(test)]
+    pub fn render_to_string(&mut self) -> String {
+        self.render();
+        self.rendered
+            .iter()
+            .map(|row| row.iter().collect::<String>())
+            .fold(String::new(), |mut init, add| {
+                init.push_str(&add);
+                init.push_str("\n");
+                init
+            })
+    }
 }
 
 impl Snake {
     #[cfg(test)]
-    pub fn from_body(body: Vec<(usize, usize)>) -> Self {
+    pub fn from_body(body: &[(usize, usize)]) -> Self {
         Snake {
-            body: VecDeque::from(body),
+            body: VecDeque::from(Vec::from(body)),
             confines: (20, 20),
         }
     }
@@ -142,7 +160,7 @@ impl Snake {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut game = Game::new(20, 20);
+    let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
     game.apples = vec![Apple { location: (4, 4) }];
 
     loop_game(game);
@@ -166,8 +184,22 @@ fn count_board_squares(game: Game) -> usize {
 
 #[test]
 fn test_creating_boards() {
-    assert_eq!(count_board_squares(Game::new(20, 20)), 20 * 20);
-    assert_eq!(count_board_squares(Game::new(50, 1)), 50);
+    assert_eq!(
+        count_board_squares(Game::new(
+            20,
+            20,
+            &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]
+        )),
+        20 * 20
+    );
+    assert_eq!(
+        count_board_squares(Game::new(
+            50,
+            1,
+            &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]
+        )),
+        50
+    );
 }
 
 #[test]
@@ -176,17 +208,27 @@ fn test_direction() {
     let downwards_body = vec![(11, 10), (10, 10)];
     let rightwards_body = vec![(10, 11), (10, 10)];
     let leftwards_body = vec![(10, 9), (10, 10)];
-    assert_eq!(Snake::from_body(upwards_body).direction(), Direction::Up);
+    assert_eq!(Snake::from_body(&upwards_body).direction(), Direction::Up);
     assert_eq!(
-        Snake::from_body(downwards_body).direction(),
+        Snake::from_body(&downwards_body).direction(),
         Direction::Down
     );
     assert_eq!(
-        Snake::from_body(rightwards_body).direction(),
+        Snake::from_body(&rightwards_body).direction(),
         Direction::Right
     );
     assert_eq!(
-        Snake::from_body(leftwards_body).direction(),
+        Snake::from_body(&leftwards_body).direction(),
         Direction::Left
     );
+}
+
+#[test]
+fn test_drawing_correct_snakes() {
+    let correct_upwards = concat!(" ^ \n", " ║ \n", " ║ \n");
+    let _correct_rightwards = concat!("   \n", "==>\n", "   \n");
+    let _correct_leftwards = concat!("   \n", "<==\n", "   \n");
+    let _correct_downwards = concat!(" ║ \n", " ║ \n", " v \n");
+    let mut game = Game::new(3, 3, &[(0, 1), (1, 1), (2, 1)]);
+    assert_eq!(game.render_to_string(), correct_upwards);
 }
