@@ -289,11 +289,23 @@ fn test_direction() {
 }
 
 #[test]
-fn test_drawing_correct_snakes() {
-    let correct_upwards = concat!(" ^ \n", " ║ \n", " ║ \n");
-    let correct_rightwards = concat!("   \n", "==>\n", "   \n");
-    let correct_leftwards = concat!("   \n", "<==\n", "   \n");
-    let correct_downwards = concat!(" ║ \n", " ║ \n", " v \n");
+fn test_drawing_simple_snakes() {
+    #[rustfmt::skip]
+    let correct_upwards = concat!(" ^ \n",
+                                        " ║ \n",
+                                        " ║ \n");
+    #[rustfmt::skip]
+    let correct_rightwards = concat!("   \n",
+                                           "==>\n",
+                                           "   \n");
+    #[rustfmt::skip]
+    let correct_leftwards = concat!("   \n",
+                                          "<==\n",
+                                          "   \n");
+    #[rustfmt::skip]
+    let correct_downwards = concat!(" ║ \n",
+                                          " ║ \n",
+                                          " v \n");
     let mut upwards_game = Game::new(3, 3, &[(0, 1), (1, 1), (2, 1)]);
     assert_eq!(upwards_game.render_to_string(), correct_upwards);
 
@@ -308,4 +320,76 @@ fn test_drawing_correct_snakes() {
 
     let mut downwards_game = Game::new(3, 3, &[(2, 1), (1, 1), (0, 1)]);
     assert_eq!(downwards_game.render_to_string(), correct_downwards);
+}
+
+#[test]
+fn test_drawing_turning_snakes() {
+    #[rustfmt::skip]
+    let correct_up_rightwards = concat!(" ╔>\n",
+                                              " ║ \n",
+                                              " ║ \n");
+    let up_rightwards_body = vec![(0, 2), (0, 1), (1, 1), (2, 1)];
+    let mut up_rightwards_game = Game::new(3, 3, &up_rightwards_body);
+    assert_eq!(up_rightwards_game.render_to_string(), correct_up_rightwards);
+    #[rustfmt::skip]
+    let correct_up_leftwards = concat!("<╗ \n",
+                                             " ║ \n",
+                                             " ║ \n");
+    let up_leftwards_body = vec![(0, 0), (0, 1), (1, 1), (2, 1)];
+    let mut up_leftwards_game = Game::new(3, 3, &up_leftwards_body);
+    assert_eq!(up_leftwards_game.render_to_string(), correct_up_leftwards);
+    #[rustfmt::skip]
+    let correct_right_upwards = concat!("  ^\n",
+                                              "==╝\n",
+                                              "   \n");
+    let right_upwards_body = vec![(0, 2), (1, 2), (1, 1), (1, 0)];
+    let mut right_upwards_game = Game::new(3, 3, &right_upwards_body);
+    assert_eq!(right_upwards_game.render_to_string(), correct_right_upwards);
+    #[rustfmt::skip]
+    let correct_right_downwards = concat!("   \n",
+                                                "==╗\n",
+                                                "  v\n");
+    let right_downwards_body = vec![(2, 2), (1, 2), (1, 1), (1, 0)];
+    let mut right_downwards_game = Game::new(3, 3, &right_downwards_body);
+    assert_eq!(
+        right_downwards_game.render_to_string(),
+        correct_right_downwards
+    );
+    #[rustfmt::skip]
+    let correct_left_upwards = concat!("^  \n",
+                                             "╚==\n",
+                                             "   \n");
+    let left_upwards_body = vec![(0, 0), (1, 0), (1, 1), (1, 2)];
+    let mut left_upwards_game = Game::new(3, 3, &left_upwards_body);
+    assert_eq!(left_upwards_game.render_to_string(), correct_left_upwards);
+    #[rustfmt::skip]
+    let correct_left_downwards = concat!("   \n",
+                                               "╔==\n",
+                                               "v  \n");
+    let left_downwards_body = vec![(2, 0), (1, 0), (1, 1), (1, 2)];
+    let mut left_downwards_game = Game::new(3, 3, &left_downwards_body);
+    assert_eq!(
+        left_downwards_game.render_to_string(),
+        correct_left_downwards
+    );
+    #[rustfmt::skip]
+    let correct_down_leftwards = concat!(" ║ \n",
+                                               " ║ \n",
+                                               "<╝ \n");
+    let down_leftwards_body = vec![(2, 0), (2, 1), (1, 1), (0, 1)];
+    let mut down_leftwards_game = Game::new(3, 3, &down_leftwards_body);
+    assert_eq!(
+        down_leftwards_game.render_to_string(),
+        correct_down_leftwards
+    );
+    #[rustfmt::skip]
+    let correct_down_rightwards = concat!(" ║ \n",
+                                                " ║ \n",
+                                                " ╚>\n");
+    let down_rightwards_body = vec![(2, 2), (2, 1), (1, 1), (0, 1)];
+    let mut down_rightwards_game = Game::new(3, 3, &down_rightwards_body);
+    assert_eq!(
+        down_rightwards_game.render_to_string(),
+        correct_down_rightwards
+    );
 }
