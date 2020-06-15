@@ -12,6 +12,7 @@ struct Game {
 }
 
 struct Snake {
+    pub direction: Direction,
     body: VecDeque<(usize, usize)>,
     confines: (usize, usize),
 }
@@ -29,6 +30,14 @@ impl Game {
                         .iter()
                         .map(|(y, x)| (*y as usize, *x as usize))
                         .collect::<Vec<_>>(),
+                ),
+                direction: Snake::head_direction(
+                    snake_body
+                        .iter()
+                        .take(2)
+                        .map(|(y, x)| (*y as usize, *x as usize))
+                        .collect::<Vec<_>>()
+                        .iter(),
                 ),
                 confines: (height, width),
             },
@@ -73,7 +82,7 @@ impl Game {
     }
 
     fn render_snake_head(&mut self) {
-        let direction = self.snake.head_direction();
+        let direction = Snake::head_direction(self.snake.body.iter());
         let (y, x) = self.snake.body[0];
         let glyph = match direction {
             Direction::Up => '^',
@@ -120,6 +129,16 @@ impl Game {
         }
     }
 
+    fn set_snake_direction_from_input(input: char) -> Option<Direction> {
+        match input {
+            'w' => Some(Direction::Up),
+            'a' => Some(Direction::Left),
+            's' => Some(Direction::Down),
+            'd' => Some(Direction::Right),
+            _ => None,
+        }
+    }
+
     #[cfg(test)]
     pub fn render_to_string(&mut self) -> String {
         self.render();
@@ -136,16 +155,17 @@ impl Game {
 
 impl Snake {
     #[cfg(test)]
+    #[allow(dead_code)]
     pub fn from_body(body: &[(usize, usize)]) -> Self {
         Snake {
             body: VecDeque::from(Vec::from(body)),
+            direction: Snake::head_direction(body.iter()),
             confines: (20, 20),
         }
     }
 
     pub fn advance(&mut self) {
-        let direction = self.head_direction();
-        let (dy, dx) = Snake::advancement_to_add(direction);
+        let (dy, dx) = Snake::advancement_to_add(&self.direction);
         let first = self.body.front().unwrap();
         let (y, x) = (first.0 as i32, first.1 as i32);
         let new = (y + dy, x + dx);
@@ -156,7 +176,7 @@ impl Snake {
         };
     }
 
-    fn advancement_to_add(direction: Direction) -> (i32, i32) {
+    fn advancement_to_add(direction: &Direction) -> (i32, i32) {
         match direction {
             Direction::Up => (-1, 0),
             Direction::Right => (0, 1),
@@ -200,8 +220,9 @@ enum Direction {
 }
 
 impl Snake {
-    fn head_direction(&self) -> Direction {
-        Snake::direction(self.body[0], self.body[1])
+    fn head_direction<'a, T: Iterator<Item = &'a (usize, usize)>>(body_iter: T) -> Direction {
+        let start_copy: Vec<_> = body_iter.take(2).collect();
+        Snake::direction(*start_copy[0], *start_copy[1])
     }
 
     fn direction((now_y, now_x): (usize, usize), (then_y, then_x): (usize, usize)) -> Direction {
@@ -235,6 +256,14 @@ fn loop_game(mut game: Game) -> ! {
     loop {
         game.render_with_border();
         let _ = stdin().read_line(&mut line).unwrap();
+        if !line.is_empty() {
+            if let Some(direction) =
+                Game::set_snake_direction_from_input(line.chars().next().unwrap())
+            {
+                game.snake.direction = direction;
+            }
+            line.clear();
+        }
         game.advance();
     }
 }
@@ -270,20 +299,17 @@ fn test_direction() {
     let downwards_body = vec![(11, 10), (10, 10)];
     let rightwards_body = vec![(10, 11), (10, 10)];
     let leftwards_body = vec![(10, 9), (10, 10)];
+    assert_eq!(Snake::head_direction(upwards_body.iter()), Direction::Up);
     assert_eq!(
-        Snake::from_body(&upwards_body).head_direction(),
-        Direction::Up
-    );
-    assert_eq!(
-        Snake::from_body(&downwards_body).head_direction(),
+        Snake::head_direction(downwards_body.iter()),
         Direction::Down
     );
     assert_eq!(
-        Snake::from_body(&rightwards_body).head_direction(),
+        Snake::head_direction(rightwards_body.iter()),
         Direction::Right
     );
     assert_eq!(
-        Snake::from_body(&leftwards_body).head_direction(),
+        Snake::head_direction(leftwards_body.iter()),
         Direction::Left
     );
 }
