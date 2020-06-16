@@ -1,10 +1,10 @@
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 use std::error::Error;
 use std::io::stdin;
 
 struct Game {
     pub snake: Snake,
-    pub apples: Vec<Apple>,
+    pub apples: HashSet<Apple>,
     pub width: usize,
     #[allow(dead_code)]
     height: usize,
@@ -13,10 +13,12 @@ struct Game {
 
 struct Snake {
     pub direction: Direction,
+    pub lengthening: bool,
     body: VecDeque<(usize, usize)>,
     confines: (usize, usize),
 }
 
+#[derive(PartialEq, Eq, Hash)]
 struct Apple {
     location: (usize, usize),
 }
@@ -31,6 +33,7 @@ impl Game {
                         .map(|(y, x)| (*y as usize, *x as usize))
                         .collect::<Vec<_>>(),
                 ),
+                lengthening: false,
                 direction: Snake::head_direction(
                     snake_body
                         .iter()
@@ -41,7 +44,7 @@ impl Game {
                 ),
                 confines: (height, width),
             },
-            apples: vec![],
+            apples: HashSet::new(),
             rendered: vec![vec![' '; width]; height],
             width,
             height,
@@ -50,6 +53,11 @@ impl Game {
 
     pub fn advance(&mut self) {
         self.snake.advance();
+        let head = self.snake.body[0];
+        if self.apples.contains(&Apple { location: head }) {
+            self.snake.lengthening = true;
+            self.apples.remove(&Apple { location: head });
+        }
     }
 
     pub fn render_with_border(&mut self) {
@@ -63,8 +71,8 @@ impl Game {
 
     fn render(&mut self) {
         self.clear();
-        self.render_snake();
         self.render_apples();
+        self.render_snake();
     }
 
     fn clear(&mut self) {
@@ -117,7 +125,7 @@ impl Game {
         let (y, x) = self.snake.body.back().unwrap();
         let glyph = match direction {
             Direction::Up | Direction::Down => '║',
-            Direction::Right | Direction::Left => '=',
+            Direction::Right | Direction::Left => '═',
         };
         self.rendered[*y][*x] = glyph;
     }
@@ -161,6 +169,7 @@ impl Snake {
             body: VecDeque::from(Vec::from(body)),
             direction: Snake::head_direction(body.iter()),
             confines: (20, 20),
+            lengthening: false,
         }
     }
 
@@ -172,7 +181,11 @@ impl Snake {
         if !self.dead_at(new) {
             let new = ((y + dy) as usize, (x + dx) as usize);
             self.body.push_front(new);
-            self.body.pop_back();
+            if self.lengthening {
+                self.lengthening = false;
+            } else {
+                self.body.pop_back();
+            }
         };
     }
 
@@ -196,7 +209,7 @@ impl Snake {
             (Direction::Up, Direction::Down) => panic!("Not possible"),
             (Direction::Up, Direction::Left) => '╚',
             (Direction::Right, Direction::Up) => '╔',
-            (Direction::Right, Direction::Right) => '=',
+            (Direction::Right, Direction::Right) => '═',
             (Direction::Right, Direction::Down) => '╚',
             (Direction::Right, Direction::Left) => panic!("Not possible"),
             (Direction::Down, Direction::Up) => panic!("Not possible"),
@@ -206,7 +219,7 @@ impl Snake {
             (Direction::Left, Direction::Up) => '╗',
             (Direction::Left, Direction::Right) => panic!("Not possible"),
             (Direction::Left, Direction::Down) => '╝',
-            (Direction::Left, Direction::Left) => '=',
+            (Direction::Left, Direction::Left) => '═',
         }
     }
 }
@@ -244,7 +257,10 @@ impl Snake {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
-    game.apples = vec![Apple { location: (4, 4) }];
+    game.apples = HashSet::new();
+    game.apples.insert(Apple { location: (4, 4) });
+    game.apples.insert(Apple { location: (9, 9) });
+    game.apples.insert(Apple { location: (9, 10) });
 
     loop_game(game);
     #[allow(unreachable_code)]
@@ -322,11 +338,11 @@ fn test_drawing_simple_snakes() {
                                         " ║ \n");
     #[rustfmt::skip]
     let correct_rightwards = concat!("   \n",
-                                           "==>\n",
+                                           "══>\n",
                                            "   \n");
     #[rustfmt::skip]
     let correct_leftwards = concat!("   \n",
-                                          "<==\n",
+                                          "<══\n",
                                           "   \n");
     #[rustfmt::skip]
     let correct_downwards = concat!(" ║ \n",
@@ -366,14 +382,14 @@ fn test_drawing_turning_snakes() {
     assert_eq!(up_leftwards_game.render_to_string(), correct_up_leftwards);
     #[rustfmt::skip]
     let correct_right_upwards = concat!("  ^\n",
-                                              "==╝\n",
+                                              "══╝\n",
                                               "   \n");
     let right_upwards_body = vec![(0, 2), (1, 2), (1, 1), (1, 0)];
     let mut right_upwards_game = Game::new(3, 3, &right_upwards_body);
     assert_eq!(right_upwards_game.render_to_string(), correct_right_upwards);
     #[rustfmt::skip]
     let correct_right_downwards = concat!("   \n",
-                                                "==╗\n",
+                                                "══╗\n",
                                                 "  v\n");
     let right_downwards_body = vec![(2, 2), (1, 2), (1, 1), (1, 0)];
     let mut right_downwards_game = Game::new(3, 3, &right_downwards_body);
@@ -383,14 +399,14 @@ fn test_drawing_turning_snakes() {
     );
     #[rustfmt::skip]
     let correct_left_upwards = concat!("^  \n",
-                                             "╚==\n",
+                                             "╚══\n",
                                              "   \n");
     let left_upwards_body = vec![(0, 0), (1, 0), (1, 1), (1, 2)];
     let mut left_upwards_game = Game::new(3, 3, &left_upwards_body);
     assert_eq!(left_upwards_game.render_to_string(), correct_left_upwards);
     #[rustfmt::skip]
     let correct_left_downwards = concat!("   \n",
-                                               "╔==\n",
+                                               "╔══\n",
                                                "v  \n");
     let left_downwards_body = vec![(2, 0), (1, 0), (1, 1), (1, 2)];
     let mut left_downwards_game = Game::new(3, 3, &left_downwards_body);
