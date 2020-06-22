@@ -1,5 +1,8 @@
+pub mod pretty_rendering;
+pub mod snake;
+
+use crate::snake::{Direction, Snake};
 use std::collections::{HashSet, VecDeque};
-use std::error::Error;
 use std::io::stdin;
 
 struct Game {
@@ -9,13 +12,6 @@ struct Game {
     #[allow(dead_code)]
     height: usize,
     rendered: Vec<Vec<char>>,
-}
-
-struct Snake {
-    pub direction: Direction,
-    pub lengthening: bool,
-    body: VecDeque<(usize, usize)>,
-    confines: (usize, usize),
 }
 
 #[derive(PartialEq, Eq, Hash)]
@@ -161,111 +157,17 @@ impl Game {
     }
 }
 
-impl Snake {
-    #[cfg(test)]
-    #[allow(dead_code)]
-    pub fn from_body(body: &[(usize, usize)]) -> Self {
-        Snake {
-            body: VecDeque::from(Vec::from(body)),
-            direction: Snake::head_direction(body.iter()),
-            confines: (20, 20),
-            lengthening: false,
-        }
-    }
-
-    pub fn advance(&mut self) {
-        let (dy, dx) = Snake::advancement_to_add(&self.direction);
-        let first = self.body.front().unwrap();
-        let (y, x) = (first.0 as i32, first.1 as i32);
-        let new = (y + dy, x + dx);
-        if !self.dead_at(new) {
-            let new = ((y + dy) as usize, (x + dx) as usize);
-            self.body.push_front(new);
-            if self.lengthening {
-                self.lengthening = false;
-            } else {
-                self.body.pop_back();
-            }
-        };
-    }
-
-    fn advancement_to_add(direction: &Direction) -> (i32, i32) {
-        match direction {
-            Direction::Up => (-1, 0),
-            Direction::Right => (0, 1),
-            Direction::Down => (1, 0),
-            Direction::Left => (0, -1),
-        }
-    }
-
-    fn dead_at(&self, (y, x): (i32, i32)) -> bool {
-        y < 0 || x < 0 || y >= self.confines.0 as i32 || x >= self.confines.1 as i32
-    }
-
-    fn get_body_glyph_from_directions(to: Direction, from: Direction) -> char {
-        match (to, from) {
-            (Direction::Up, Direction::Up) => '║',
-            (Direction::Up, Direction::Right) => '╝',
-            (Direction::Up, Direction::Down) => panic!("Not possible"),
-            (Direction::Up, Direction::Left) => '╚',
-            (Direction::Right, Direction::Up) => '╔',
-            (Direction::Right, Direction::Right) => '═',
-            (Direction::Right, Direction::Down) => '╚',
-            (Direction::Right, Direction::Left) => panic!("Not possible"),
-            (Direction::Down, Direction::Up) => panic!("Not possible"),
-            (Direction::Down, Direction::Right) => '╗',
-            (Direction::Down, Direction::Down) => '║',
-            (Direction::Down, Direction::Left) => '╔',
-            (Direction::Left, Direction::Up) => '╗',
-            (Direction::Left, Direction::Right) => panic!("Not possible"),
-            (Direction::Left, Direction::Down) => '╝',
-            (Direction::Left, Direction::Left) => '═',
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug)]
-enum Direction {
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
-impl Snake {
-    fn head_direction<'a, T: Iterator<Item = &'a (usize, usize)>>(body_iter: T) -> Direction {
-        let start_copy: Vec<_> = body_iter.take(2).collect();
-        Snake::direction(*start_copy[0], *start_copy[1])
-    }
-
-    fn direction((now_y, now_x): (usize, usize), (then_y, then_x): (usize, usize)) -> Direction {
-        let (now_y, now_x) = Self::point_helper((now_y, now_x));
-        let (then_y, then_x) = Self::point_helper((then_y, then_x));
-        match (now_y - then_y, now_x - then_x) {
-            (-1, 0) => Direction::Up,
-            (1, 0) => Direction::Down,
-            (0, 1) => Direction::Right,
-            (0, -1) => Direction::Left,
-            x => panic!("Invalid direction determined: {:?}", x),
-        }
-    }
-
-    fn point_helper(point: (usize, usize)) -> (i32, i32) {
-        (point.0 as i32, point.1 as i32)
-    }
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
-    game.apples = HashSet::new();
-    game.apples.insert(Apple { location: (4, 4) });
-    game.apples.insert(Apple { location: (9, 9) });
-    game.apples.insert(Apple { location: (9, 10) });
-
-    loop_game(game);
-    #[allow(unreachable_code)]
-    Ok(())
-}
+// fn main() -> Result<(), Box<dyn Error>> {
+//     let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
+//     game.apples = HashSet::new();
+//     game.apples.insert(Apple { location: (4, 4) });
+//     game.apples.insert(Apple { location: (9, 9) });
+//     game.apples.insert(Apple { location: (9, 10) });
+//
+//     loop_game(game);
+//     #[allow(unreachable_code)]
+//     Ok(())
+// }
 
 fn loop_game(mut game: Game) -> ! {
     let mut line = String::new();
@@ -434,4 +336,98 @@ fn test_drawing_turning_snakes() {
         down_rightwards_game.render_to_string(),
         correct_down_rightwards
     );
+}
+
+use ggez::event;
+use ggez::graphics;
+use ggez::graphics::{DrawParam, Drawable};
+use ggez::nalgebra as na;
+
+struct MainState {
+    pos_x: f32,
+}
+
+impl MainState {
+    fn new() -> ggez::GameResult<MainState> {
+        let s = MainState { pos_x: 0.0 };
+        Ok(s)
+    }
+}
+
+impl event::EventHandler for MainState {
+    fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
+        Ok(())
+    }
+
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
+
+        draw_border(ctx)?;
+        let snake = Snake::from_body(&[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
+        let my_dest = na::Point2::new(0.0, 0.0);
+        snake.draw(ctx, DrawParam::default().dest(my_dest))?;
+        graphics::present(ctx)?;
+        Ok(())
+    }
+}
+
+fn draw_snake_start(ctx: &mut ggez::Context) -> ggez::GameResult {
+    let head = graphics::Mesh::new_rectangle(
+        ctx,
+        graphics::DrawMode::fill(),
+        graphics::Rect::new(400.0, 300.0, 50.0, 50.0),
+        graphics::Color::new(0.0, 1.0, 0.0, 1.0),
+    )?;
+    graphics::draw(ctx, &head, (na::Point2::new(0.0, 0.0),))
+}
+
+fn draw_border(ctx: &mut ggez::Context) -> ggez::GameResult {
+    let top = graphics::Mesh::new_line(
+        ctx,
+        &[
+            na::Point2::new(0.0 + 25.0, 25.0),
+            na::Point2::new(800.0 - 25.0, 25.0),
+        ],
+        5.0,
+        graphics::WHITE,
+    )?;
+    let right = graphics::Mesh::new_line(
+        ctx,
+        &[
+            na::Point2::new(800.0 - 25.0, 0.0 + 25.0),
+            na::Point2::new(800.0 - 25.0, 600.0 - 25.0),
+        ],
+        5.0,
+        graphics::WHITE,
+    )?;
+    let bottom = graphics::Mesh::new_line(
+        ctx,
+        &[
+            na::Point2::new(0.0 + 25.0, 600.0 - 25.0),
+            na::Point2::new(800.0 - 25.0, 600.0 - 25.0),
+        ],
+        5.0,
+        graphics::WHITE,
+    )?;
+    let left = graphics::Mesh::new_line(
+        ctx,
+        &[
+            na::Point2::new(0.0 + 25.0, 0.0 + 25.0 - 2.5),
+            na::Point2::new(0.0 + 25.0, 600.0 - 25.0 + 2.5),
+        ],
+        5.0,
+        graphics::WHITE,
+    )?;
+    graphics::draw(ctx, &top, (na::Point2::new(0.0, 0.0),))?;
+    graphics::draw(ctx, &right, (na::Point2::new(0.0, 0.0),))?;
+    graphics::draw(ctx, &bottom, (na::Point2::new(0.0, 0.0),))?;
+    graphics::draw(ctx, &left, (na::Point2::new(0.0, 0.0),))?;
+    Ok(())
+}
+
+pub fn main() -> ggez::GameResult {
+    let cb = ggez::ContextBuilder::new("snakin'", "Rups");
+    let (ctx, event_loop) = &mut cb.build()?;
+    let state = &mut MainState::new()?;
+    event::run(ctx, event_loop, state)
 }
