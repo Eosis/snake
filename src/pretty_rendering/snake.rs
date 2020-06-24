@@ -110,29 +110,32 @@ impl Snake {
         Ok(())
     }
 
+    fn body_pos_to_na_point(
+        (y, x): (usize, usize),
+        x_interval: f32,
+        y_interval: f32,
+    ) -> na::Point2<f32> {
+        na::Point2::new(
+            x as f32 * x_interval + x_interval / 2.0,
+            y as f32 * y_interval + y_interval / 2.0,
+        )
+    }
+
     fn draw_body(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
         let x_interval = (600 / self.confines.0) as f32;
         let y_interval = (500 / self.confines.1) as f32;
-        for window in Vec::from(self.body.clone()).windows(3) {
-            let to = Snake::direction(window[0], window[1]);
-            let from = Snake::direction(window[1], window[2]);
-            let joining_mesh = Snake::get_body_line_from_directions(
-                to,
-                from,
-                ctx,
-                &graphics::Rect::new(0.0, 0.0, x_interval, y_interval),
-            )?;
-            let (y_to_set, x_to_set) = (
-                window[1].0 as f32 * y_interval,
-                window[1].1 as f32 * x_interval,
-            );
-            graphics::draw(
-                ctx,
-                &joining_mesh,
-                (na::Point2::new(x_to_set as f32, y_to_set as f32),),
-            )?;
-        }
-        Ok(())
+        let na_points: Vec<_> = self
+            .body
+            .iter()
+            .map(|x| Snake::body_pos_to_na_point(*x, x_interval, y_interval))
+            .collect();
+        let body = graphics::Mesh::new_line(
+            ctx,
+            &na_points,
+            x_interval / 4.0,
+            graphics::Color::new(0.0, 1.0, 0.0, 1.0),
+        )?;
+        graphics::draw(ctx, &body, (na::Point2::new(0.0, 0.0),))
     }
 
     pub fn get_body_line_from_directions(

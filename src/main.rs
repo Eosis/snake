@@ -363,22 +363,13 @@ impl event::EventHandler for MainState {
         graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
 
         draw_border(ctx)?;
-        let snake = Snake::from_body(&[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
+        let snake =
+            Snake::from_body(&[(10, 10), (10, 9), (9, 9), (9, 8), (10, 8), (10, 7), (10, 6)]);
         let my_dest = na::Point2::new(0.0, 0.0);
         snake.draw(ctx, DrawParam::default().dest(my_dest))?;
         graphics::present(ctx)?;
         Ok(())
     }
-}
-
-fn draw_snake_start(ctx: &mut ggez::Context) -> ggez::GameResult {
-    let head = graphics::Mesh::new_rectangle(
-        ctx,
-        graphics::DrawMode::fill(),
-        graphics::Rect::new(400.0, 300.0, 50.0, 50.0),
-        graphics::Color::new(0.0, 1.0, 0.0, 1.0),
-    )?;
-    graphics::draw(ctx, &head, (na::Point2::new(0.0, 0.0),))
 }
 
 fn draw_border(ctx: &mut ggez::Context) -> ggez::GameResult {
