@@ -76,6 +76,27 @@ impl Snake {
         }
     }
 
+    pub fn get_body_type_directions(to: Direction, from: Direction) -> char {
+        match (to, from) {
+            (Direction::Up, Direction::Up) => '║',
+            (Direction::Up, Direction::Right) => '╝',
+            (Direction::Up, Direction::Down) => panic!("Not possible"),
+            (Direction::Up, Direction::Left) => '╚',
+            (Direction::Right, Direction::Up) => '╔',
+            (Direction::Right, Direction::Right) => '═',
+            (Direction::Right, Direction::Down) => '╚',
+            (Direction::Right, Direction::Left) => panic!("Not possible"),
+            (Direction::Down, Direction::Up) => panic!("Not possible"),
+            (Direction::Down, Direction::Right) => '╗',
+            (Direction::Down, Direction::Down) => '║',
+            (Direction::Down, Direction::Left) => '╔',
+            (Direction::Left, Direction::Up) => '╗',
+            (Direction::Left, Direction::Right) => panic!("Not possible"),
+            (Direction::Left, Direction::Down) => '╝',
+            (Direction::Left, Direction::Left) => '═',
+        }
+    }
+
     pub fn head_direction<'a, T: Iterator<Item = &'a (usize, usize)>>(body_iter: T) -> Direction {
         let start_copy: Vec<_> = body_iter.take(2).collect();
         Snake::direction(*start_copy[0], *start_copy[1])
