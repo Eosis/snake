@@ -17,7 +17,7 @@ struct Game {
 }
 
 #[derive(PartialEq, Eq, Hash)]
-struct Apple {
+pub struct Apple {
     location: (usize, usize),
 }
 
@@ -369,6 +369,10 @@ struct MainState {
 
 impl MainState {
     fn new(window_size: (f32, f32)) -> ggez::GameResult<MainState> {
+        let mut apples = HashSet::new();
+        for apple in &[(1, 0), (2, 0), (3, 0), (4, 0)] {
+            apples.insert(Apple { location: *apple });
+        }
         let s = MainState {
             window_size,
             game: Game {
@@ -379,7 +383,7 @@ impl MainState {
                     confines: (20, 20),
                     confines_size: (window_size.0 - 60.0, window_size.1 - 60.0),
                 },
-                apples: HashSet::new(),
+                apples,
                 width: 20,
                 height: 20,
                 rendered: vec![],
@@ -408,7 +412,7 @@ const DEBUG: bool = true;
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
-        if self.game.last_advance.elapsed().as_secs_f32() >= 2.0 {
+        if self.game.last_advance.elapsed().as_secs_f32() >= 0.5 {
             self.game.advance();
             self.game.last_advance = Instant::now();
         }
@@ -417,16 +421,24 @@ impl event::EventHandler for MainState {
 
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let play_area = na::Point2::new(30.0, 30.0);
+        let container = graphics::Rect::new(30.0, 30.0, 540.0, 540.0);
         graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
         self.game
             .snake
-            .draw(ctx, DrawParam::default().dest(play_area));
+            .draw(ctx, DrawParam::default().dest(play_area))?;
+        let apples = pretty_rendering::apples::Apples::new(
+            &self.game.apples,
+            container,
+            self.game.snake.confines,
+        );
+        apples.draw(ctx, DrawParam::default().dest(play_area))?;
+
         self.draw_border(ctx)?;
         if DEBUG {
             let mesh = DebugMesh {
                 rows: self.game.snake.confines.0,
                 columns: self.game.snake.confines.1,
-                container: graphics::Rect::new(30.0, 30.0, 540.0, 540.0),
+                container,
             };
             mesh.draw(ctx, DrawParam::default().dest(play_area))?;
         }
