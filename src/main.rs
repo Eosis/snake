@@ -9,8 +9,10 @@ struct Game {
     pub snake: Snake,
     pub apples: HashSet<Apple>,
     pub width: usize,
+    pub last_advance: Instant,
     #[allow(dead_code)]
     height: usize,
+    #[allow(dead_code)]
     rendered: Vec<Vec<char>>,
 }
 
@@ -39,11 +41,13 @@ impl Game {
                         .iter(),
                 ),
                 confines: (height, width),
+                confines_size: (550.0, 550.0),
             },
             apples: HashSet::new(),
             rendered: vec![vec![' '; width]; height],
             width,
             height,
+            last_advance: Instant::now(),
         }
     }
 
@@ -139,6 +143,16 @@ impl Game {
             'a' => Some(Direction::Left),
             's' => Some(Direction::Down),
             'd' => Some(Direction::Right),
+            _ => None,
+        }
+    }
+
+    fn get_snake_direction_from_keypress(input: KeyCode) -> Option<Direction> {
+        match input {
+            KeyCode::Up => Some(Direction::Up),
+            KeyCode::Right => Some(Direction::Right),
+            KeyCode::Down => Some(Direction::Down),
+            KeyCode::Left => Some(Direction::Left),
             _ => None,
         }
     }
@@ -338,87 +352,151 @@ fn test_drawing_turning_snakes() {
     );
 }
 
+use ggez::conf::WindowMode;
 use ggez::event;
+use ggez::event::quit;
 use ggez::graphics;
 use ggez::graphics::{DrawParam, Drawable};
+use ggez::input::keyboard::{KeyCode, KeyMods};
 use ggez::nalgebra as na;
+use std::time::Instant;
 
 struct MainState {
-    pos_x: f32,
+    window_size: (f32, f32),
+    game: Game,
 }
 
 impl MainState {
-    fn new() -> ggez::GameResult<MainState> {
-        let s = MainState { pos_x: 0.0 };
+    fn new(window_size: (f32, f32)) -> ggez::GameResult<MainState> {
+        let s = MainState {
+            window_size,
+            game: Game {
+                snake: Snake {
+                    direction: Direction::Left,
+                    lengthening: false,
+                    body: VecDeque::from(vec![
+                        (7, 10),
+                        (7, 11),
+                        (8, 11),
+                        (9, 11),
+                        (9, 10),
+                        (10, 10),
+                        (10, 9),
+                        (9, 9),
+                        (9, 8),
+                        (10, 8),
+                        (10, 7),
+                        (10, 6),
+                        (9, 6),
+                    ]),
+                    confines: (20, 20),
+                    confines_size: (window_size.0, window_size.1),
+                },
+                apples: HashSet::new(),
+                width: 20,
+                height: 20,
+                rendered: vec![],
+                last_advance: Instant::now(),
+            },
+        };
         Ok(s)
+    }
+
+    fn draw_border(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let (w, h) = self.window_size;
+        let points = [
+            na::Point2::new(25.0, 25.0),
+            na::Point2::new(w - 25.0, 25.0),
+            na::Point2::new(w - 25.0, h - 25.0),
+            na::Point2::new(25.0, h - 25.0),
+            na::Point2::new(25.0, 25.0),
+        ];
+        let border = graphics::Mesh::new_line(ctx, &points, 5.0, graphics::WHITE)?;
+        graphics::draw(ctx, &border, (na::Point2::new(0.0, 0.0),))?;
+        Ok(())
+    }
+
+    fn draw_mesh(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let (x_interval, y_interval) = self.game.snake.intervals();
+        for x in 0..self.game.snake.confines.0 {
+            let line = graphics::Mesh::new_line(
+                ctx,
+                &[
+                    na::Point2::new(x as f32 * x_interval, 0.0),
+                    na::Point2::new(x as f32 * x_interval, self.game.snake.confines_size.1),
+                ],
+                1.0,
+                graphics::Color::new(0.0, 0.0, 0.5, 1.0),
+            )?;
+            graphics::draw(ctx, &line, (na::Point2::new(0.0, 0.0),))?;
+        }
+        for y in 0..self.game.snake.confines.1 {
+            let line = graphics::Mesh::new_line(
+                ctx,
+                &[
+                    na::Point2::new(0.0, y as f32 * y_interval),
+                    na::Point2::new(self.game.snake.confines_size.0, y as f32 * y_interval),
+                ],
+                1.0,
+                graphics::Color::new(0.0, 0.0, 0.5, 1.0),
+            )?;
+            graphics::draw(ctx, &line, (na::Point2::new(0.0, 0.0),))?;
+        }
+        Ok(())
     }
 }
 
+const DEBUG: bool = true;
+
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
+        if self.game.last_advance.elapsed().as_secs_f32() >= 2.0 {
+            self.game.advance();
+            self.game.last_advance = Instant::now();
+        }
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let origin = na::Point2::new(0.0, 0.0);
         graphics::clear(ctx, [0.1, 0.2, 0.3, 1.0].into());
-
-        draw_border(ctx)?;
-        let snake =
-            Snake::from_body(&[(10, 10), (10, 9), (9, 9), (9, 8), (10, 8), (10, 7), (10, 6)]);
-        let my_dest = na::Point2::new(0.0, 0.0);
-        snake.draw(ctx, DrawParam::default().dest(my_dest))?;
+        self.game.snake.draw(ctx, DrawParam::default().dest(origin));
+        self.draw_border(ctx)?;
+        if DEBUG {
+            self.draw_mesh(ctx)?;
+        }
         graphics::present(ctx)?;
         Ok(())
     }
-}
 
-fn draw_border(ctx: &mut ggez::Context) -> ggez::GameResult {
-    let top = graphics::Mesh::new_line(
-        ctx,
-        &[
-            na::Point2::new(0.0 + 25.0, 25.0),
-            na::Point2::new(800.0 - 25.0, 25.0),
-        ],
-        5.0,
-        graphics::WHITE,
-    )?;
-    let right = graphics::Mesh::new_line(
-        ctx,
-        &[
-            na::Point2::new(800.0 - 25.0, 0.0 + 25.0),
-            na::Point2::new(800.0 - 25.0, 600.0 - 25.0),
-        ],
-        5.0,
-        graphics::WHITE,
-    )?;
-    let bottom = graphics::Mesh::new_line(
-        ctx,
-        &[
-            na::Point2::new(0.0 + 25.0, 600.0 - 25.0),
-            na::Point2::new(800.0 - 25.0, 600.0 - 25.0),
-        ],
-        5.0,
-        graphics::WHITE,
-    )?;
-    let left = graphics::Mesh::new_line(
-        ctx,
-        &[
-            na::Point2::new(0.0 + 25.0, 0.0 + 25.0 - 2.5),
-            na::Point2::new(0.0 + 25.0, 600.0 - 25.0 + 2.5),
-        ],
-        5.0,
-        graphics::WHITE,
-    )?;
-    graphics::draw(ctx, &top, (na::Point2::new(0.0, 0.0),))?;
-    graphics::draw(ctx, &right, (na::Point2::new(0.0, 0.0),))?;
-    graphics::draw(ctx, &bottom, (na::Point2::new(0.0, 0.0),))?;
-    graphics::draw(ctx, &left, (na::Point2::new(0.0, 0.0),))?;
-    Ok(())
+    fn key_down_event(
+        &mut self,
+        ctx: &mut ggez::Context,
+        keycode: KeyCode,
+        _keymods: KeyMods,
+        _repeat: bool,
+    ) {
+        match keycode {
+            KeyCode::Up | KeyCode::Right | KeyCode::Down | KeyCode::Left => {
+                let new_dir = Game::get_snake_direction_from_keypress(keycode).unwrap();
+                self.game.snake.direction = new_dir;
+            }
+            KeyCode::Escape => {
+                quit(ctx);
+            }
+            _ => (),
+        }
+    }
 }
 
 pub fn main() -> ggez::GameResult {
-    let cb = ggez::ContextBuilder::new("snakin'", "Rups");
+    let window_size = (600.0, 600.0);
+    let cb = ggez::ContextBuilder::new("snakin'", "Rups").window_mode(WindowMode {
+        width: window_size.0,
+        height: window_size.1,
+        ..Default::default()
+    });
     let (ctx, event_loop) = &mut cb.build()?;
-    let state = &mut MainState::new()?;
+    let state = &mut MainState::new(window_size)?;
     event::run(ctx, event_loop, state)
 }

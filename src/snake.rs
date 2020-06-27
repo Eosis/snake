@@ -13,9 +13,17 @@ pub struct Snake {
     pub lengthening: bool,
     pub body: VecDeque<(usize, usize)>,
     pub confines: (usize, usize),
+    pub confines_size: (f32, f32),
 }
 
 impl Snake {
+    pub fn intervals(&self) -> (f32, f32) {
+        (
+            self.confines_size.0 / self.confines.0 as f32,
+            self.confines_size.1 / self.confines.1 as f32,
+        )
+    }
+
     #[allow(dead_code)]
     pub fn from_body(body: &[(usize, usize)]) -> Self {
         Snake {
@@ -23,6 +31,7 @@ impl Snake {
             direction: Snake::head_direction(body.iter()),
             confines: (20, 20),
             lengthening: false,
+            confines_size: (550.0, 550.0),
         }
     }
 

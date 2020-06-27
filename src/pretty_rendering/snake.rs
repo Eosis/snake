@@ -2,15 +2,16 @@ use crate::snake::{Direction, Snake};
 use ggez::graphics::{BlendMode, DrawParam, Drawable, Rect};
 use ggez::nalgebra as na;
 use ggez::{graphics, Context, GameResult};
+use std::f32::consts::PI;
 
 fn tuple_to_f32(tuple: &(usize, usize)) -> (f32, f32) {
     (tuple.0 as f32, tuple.1 as f32)
 }
 
 impl Drawable for Snake {
-    fn draw(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
-        self.draw_head(ctx, _param)?;
-        self.draw_body(ctx, _param)?;
+    fn draw(&self, ctx: &mut Context, param: DrawParam) -> GameResult {
+        self.draw_head(ctx, param)?;
+        self.draw_body(ctx, param)?;
         Ok(())
     }
 
@@ -65,17 +66,13 @@ impl Snake {
     // }
 
     fn draw_head(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
-        // Make a grid from 100 -> 700 x, 50 -> 550 y, with dimensions of grid in confines.
-        let x_interval = (600 / self.confines.0) as f32;
-        let y_interval = (500 / self.confines.1) as f32;
+        let x_interval = self.confines_size.0 / self.confines.0 as f32;
+        let y_interval = self.confines_size.1 / self.confines.1 as f32;
         let head_pos = self.body[0];
         let (head_y, head_x) = tuple_to_f32(&head_pos);
         // Line first:
-        let line_start = (head_x * x_interval, head_y * y_interval + y_interval / 2.0);
-        let line_end = (
-            head_x * x_interval + x_interval / 4.0,
-            head_y * y_interval + y_interval / 2.0,
-        );
+        let line_start = (0.0, y_interval / 2.0);
+        let line_end = (x_interval / 4.0, y_interval / 2.0);
         let line = graphics::Mesh::new_line(
             ctx,
             &[
@@ -90,23 +87,26 @@ impl Snake {
             ctx,
             graphics::DrawMode::fill(),
             &[
-                na::Point2::new(
-                    x_interval * head_x + x_interval / 4.0,
-                    y_interval * head_y + y_interval / 4.0,
-                ),
-                na::Point2::new(
-                    x_interval * (head_x + 1.0) - x_interval / 4.0,
-                    y_interval * head_y + y_interval / 2.0,
-                ),
-                na::Point2::new(
-                    x_interval * head_x + x_interval / 4.0,
-                    y_interval * (head_y + 1.0) - y_interval / 4.0,
-                ),
+                na::Point2::new(x_interval / 4.0, y_interval / 4.0),
+                na::Point2::new(x_interval * 3.0 / 4.0, y_interval / 2.0),
+                na::Point2::new(x_interval / 4.0, y_interval * 3.0 / 4.0),
             ],
             graphics::Color::new(0.0, 1.0, 0.0, 1.0),
         )?;
-        graphics::draw(ctx, &line, (na::Point2::new(0.0, 0.0),))?;
-        graphics::draw(ctx, &arrow, (na::Point2::new(0.0, 0.0),))?;
+        let head_rotation = match Snake::head_direction(self.body.iter()) {
+            Direction::Up => 3.0 * PI / 2.0,
+            Direction::Right => 0.0,
+            Direction::Down => PI / 2.0,
+            Direction::Left => PI,
+        };
+        let rot = DrawParam {
+            rotation: head_rotation,
+            dest: na::Point2::new(x_interval * head_x, y_interval * head_y).into(),
+            offset: na::Point2::new(x_interval / 2.0, y_interval / 2.0).into(),
+            ..Default::default()
+        };
+        graphics::draw(ctx, &line, rot)?;
+        graphics::draw(ctx, &arrow, rot)?;
         Ok(())
     }
 
@@ -122,16 +122,16 @@ impl Snake {
     }
 
     fn draw_body(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
-        let x_interval = (600 / self.confines.0) as f32;
-        let y_interval = (500 / self.confines.1) as f32;
-        let na_points: Vec<_> = self
+        let x_interval = self.confines_size.0 / self.confines.0 as f32;
+        let y_interval = self.confines_size.0 / self.confines.1 as f32;
+        let body_points: Vec<_> = self
             .body
             .iter()
             .map(|x| Snake::body_pos_to_na_point(*x, x_interval, y_interval))
             .collect();
         let body = graphics::Mesh::new_line(
             ctx,
-            &na_points,
+            &body_points,
             x_interval / 4.0,
             graphics::Color::new(0.0, 1.0, 0.0, 1.0),
         )?;
