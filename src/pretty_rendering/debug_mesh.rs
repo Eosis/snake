@@ -20,7 +20,7 @@ impl Drawable for DebugMesh {
                 ctx,
                 &[
                     na::Point2::new(x as f32 * x_interval, 0.0),
-                    na::Point2::new(x as f32 * x_interval, self.container.w),
+                    na::Point2::new(x as f32 * x_interval, self.container.h),
                 ],
                 1.0,
                 Color::new(0.0, 0.0, 0.5, 1.0),
@@ -32,7 +32,7 @@ impl Drawable for DebugMesh {
                 ctx,
                 &[
                     na::Point2::new(0.0, y as f32 * y_interval),
-                    na::Point2::new(self.container.h, y as f32 * y_interval),
+                    na::Point2::new(self.container.w, y as f32 * y_interval),
                 ],
                 1.0,
                 Color::new(0.0, 0.0, 0.5, 1.0),

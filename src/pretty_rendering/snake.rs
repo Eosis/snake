@@ -1,11 +1,23 @@
 use crate::snake::{Direction, Snake};
-use ggez::graphics::{BlendMode, DrawParam, Drawable, Rect};
+use ggez::graphics::{mint, BlendMode, DrawParam, Drawable, Rect};
 use ggez::nalgebra as na;
 use ggez::{graphics, Context, GameResult};
 use std::f32::consts::PI;
 
 fn tuple_to_f32(tuple: &(usize, usize)) -> (f32, f32) {
     (tuple.0 as f32, tuple.1 as f32)
+}
+
+fn add_points<T: Into<mint::Point2<f32>>, X: Into<mint::Point2<f32>>>(
+    first: T,
+    second: X,
+) -> mint::Point2<f32> {
+    let first: mint::Point2<f32> = first.into();
+    let second: mint::Point2<f32> = second.into();
+    mint::Point2::<f32> {
+        x: first.x + second.x,
+        y: first.y + second.y,
+    }
 }
 
 impl Drawable for Snake {
@@ -36,7 +48,7 @@ impl Drawable for Snake {
 }
 
 impl Snake {
-    fn draw_head(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
+    fn draw_head(&self, ctx: &mut Context, param: DrawParam) -> GameResult {
         let x_interval = self.confines_size.0 / self.confines.0 as f32;
         let y_interval = self.confines_size.1 / self.confines.1 as f32;
         let head_pos = self.body[0];
@@ -70,9 +82,13 @@ impl Snake {
             Direction::Down => PI / 2.0,
             Direction::Left => PI,
         };
+        let new_dest: mint::Point2<f32> = add_points(
+            na::Point2::new(x_interval * head_x, y_interval * head_y),
+            param.dest,
+        );
         let rot = DrawParam {
             rotation: head_rotation,
-            dest: na::Point2::new(x_interval * head_x, y_interval * head_y).into(),
+            dest: new_dest,
             offset: na::Point2::new(x_interval / 2.0, y_interval / 2.0).into(),
             ..Default::default()
         };
@@ -92,7 +108,7 @@ impl Snake {
         )
     }
 
-    fn draw_body(&self, ctx: &mut Context, _param: DrawParam) -> GameResult {
+    fn draw_body(&self, ctx: &mut Context, param: DrawParam) -> GameResult {
         let x_interval = self.confines_size.0 / self.confines.0 as f32;
         let y_interval = self.confines_size.0 / self.confines.1 as f32;
         let body_points: Vec<_> = self
@@ -106,6 +122,6 @@ impl Snake {
             x_interval / 4.0,
             graphics::Color::new(0.0, 1.0, 0.0, 1.0),
         )?;
-        graphics::draw(ctx, &body, (na::Point2::new(0.0, 0.0),))
+        graphics::draw(ctx, &body, (param.dest,))
     }
 }
