@@ -352,6 +352,7 @@ fn test_drawing_turning_snakes() {
     );
 }
 
+use crate::pretty_rendering::debug_mesh::DebugMesh;
 use ggez::conf::WindowMode;
 use ggez::event;
 use ggez::event::quit;
@@ -374,21 +375,7 @@ impl MainState {
                 snake: Snake {
                     direction: Direction::Left,
                     lengthening: false,
-                    body: VecDeque::from(vec![
-                        (7, 10),
-                        (7, 11),
-                        (8, 11),
-                        (9, 11),
-                        (9, 10),
-                        (10, 10),
-                        (10, 9),
-                        (9, 9),
-                        (9, 8),
-                        (10, 8),
-                        (10, 7),
-                        (10, 6),
-                        (9, 6),
-                    ]),
+                    body: VecDeque::from(vec![(10, 10), (10, 11), (10, 12), (10, 13), (10, 14)]),
                     confines: (20, 20),
                     confines_size: (window_size.0, window_size.1),
                 },
@@ -405,45 +392,45 @@ impl MainState {
     fn draw_border(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let (w, h) = self.window_size;
         let points = [
-            na::Point2::new(25.0, 25.0),
-            na::Point2::new(w - 25.0, 25.0),
-            na::Point2::new(w - 25.0, h - 25.0),
-            na::Point2::new(25.0, h - 25.0),
-            na::Point2::new(25.0, 25.0),
+            na::Point2::new(15.0, 15.0),
+            na::Point2::new(w - 15.0, 15.0),
+            na::Point2::new(w - 15.0, h - 15.0),
+            na::Point2::new(15.0, h - 15.0),
+            na::Point2::new(15.0, 15.0),
         ];
         let border = graphics::Mesh::new_line(ctx, &points, 5.0, graphics::WHITE)?;
         graphics::draw(ctx, &border, (na::Point2::new(0.0, 0.0),))?;
         Ok(())
     }
 
-    fn draw_mesh(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        let (x_interval, y_interval) = self.game.snake.intervals();
-        for x in 0..self.game.snake.confines.0 {
-            let line = graphics::Mesh::new_line(
-                ctx,
-                &[
-                    na::Point2::new(x as f32 * x_interval, 0.0),
-                    na::Point2::new(x as f32 * x_interval, self.game.snake.confines_size.1),
-                ],
-                1.0,
-                graphics::Color::new(0.0, 0.0, 0.5, 1.0),
-            )?;
-            graphics::draw(ctx, &line, (na::Point2::new(0.0, 0.0),))?;
-        }
-        for y in 0..self.game.snake.confines.1 {
-            let line = graphics::Mesh::new_line(
-                ctx,
-                &[
-                    na::Point2::new(0.0, y as f32 * y_interval),
-                    na::Point2::new(self.game.snake.confines_size.0, y as f32 * y_interval),
-                ],
-                1.0,
-                graphics::Color::new(0.0, 0.0, 0.5, 1.0),
-            )?;
-            graphics::draw(ctx, &line, (na::Point2::new(0.0, 0.0),))?;
-        }
-        Ok(())
-    }
+    // fn draw_mesh(&mut self, ctx: &mut ggez::Context, origin: na::Point2<f32>) -> ggez::GameResult {
+    //     let (x_interval, y_interval) = self.game.snake.intervals();
+    //     for x in 0..self.game.snake.confines.0 {
+    //         let line = graphics::Mesh::new_line(
+    //             ctx,
+    //             &[
+    //                 na::Point2::new(x as f32 * x_interval, 0.0),
+    //                 na::Point2::new(x as f32 * x_interval, self.game.snake.confines_size.1),
+    //             ],
+    //             1.0,
+    //             graphics::Color::new(0.0, 0.0, 0.5, 1.0),
+    //         )?;
+    //         graphics::draw(ctx, &line, (origin,))?;
+    //     }
+    //     for y in 0..self.game.snake.confines.1 {
+    //         let line = graphics::Mesh::new_line(
+    //             ctx,
+    //             &[
+    //                 na::Point2::new(0.0, y as f32 * y_interval),
+    //                 na::Point2::new(self.game.snake.confines_size.0, y as f32 * y_interval),
+    //             ],
+    //             1.0,
+    //             graphics::Color::new(0.0, 0.0, 0.5, 1.0),
+    //         )?;
+    //         graphics::draw(ctx, &line, (origin,))?;
+    //     }
+    //     Ok(())
+    // }
 }
 
 const DEBUG: bool = true;
@@ -463,7 +450,12 @@ impl event::EventHandler for MainState {
         self.game.snake.draw(ctx, DrawParam::default().dest(origin));
         self.draw_border(ctx)?;
         if DEBUG {
-            self.draw_mesh(ctx)?;
+            let mesh = DebugMesh {
+                rows: self.game.snake.confines.0,
+                columns: self.game.snake.confines.1,
+                container: graphics::Rect::new(30.0, 30.0, 540.0, 540.0),
+            };
+            mesh.draw(ctx, DrawParam::default().dest(na::Point2::new(30.0, 30.0)))?;
         }
         graphics::present(ctx)?;
         Ok(())
