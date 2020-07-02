@@ -1,4 +1,5 @@
 pub mod pretty_rendering;
+pub mod print_rendering;
 pub mod snake;
 
 use crate::snake::{Direction, Snake};
@@ -12,8 +13,6 @@ struct Game {
     pub last_advance: Instant,
     #[allow(dead_code)]
     height: usize,
-    #[allow(dead_code)]
-    rendered: Vec<Vec<char>>,
 }
 
 #[derive(PartialEq, Eq, Hash)]
@@ -44,7 +43,6 @@ impl Game {
                 confines_size: (550.0, 550.0),
             },
             apples: HashSet::new(),
-            rendered: vec![vec![' '; width]; height],
             width,
             height,
             last_advance: Instant::now(),
@@ -57,83 +55,6 @@ impl Game {
         if self.apples.contains(&Apple { location: head }) {
             self.snake.lengthening = true;
             self.apples.remove(&Apple { location: head });
-        }
-    }
-
-    pub fn render_with_border(&mut self) {
-        self.render();
-        println!("{}", "-".repeat(self.width + 2));
-        for row in self.rendered.iter() {
-            println!("|{}|", row.iter().collect::<String>());
-        }
-        println!("{}", "-".repeat(self.width + 2));
-    }
-
-    fn render(&mut self) {
-        self.clear();
-        self.render_apples();
-        self.render_snake();
-    }
-
-    fn clear(&mut self) {
-        for row in self.rendered.iter_mut() {
-            for elem in row.iter_mut() {
-                *elem = ' ';
-            }
-        }
-    }
-
-    fn render_snake(&mut self) {
-        self.render_snake_head();
-        self.render_snake_body();
-        self.render_snake_tail();
-    }
-
-    fn render_snake_head(&mut self) {
-        let direction = Snake::head_direction(self.snake.body.iter());
-        let (y, x) = self.snake.body[0];
-        let glyph = match direction {
-            Direction::Up => '^',
-            Direction::Right => '>',
-            Direction::Down => 'v',
-            Direction::Left => '<',
-        };
-        self.rendered[y][x] = glyph;
-    }
-
-    fn render_snake_body(&mut self) {
-        for window in Vec::from(self.snake.body.clone()).windows(3) {
-            let to = Snake::direction(window[0], window[1]);
-            let from = Snake::direction(window[1], window[2]);
-            let joining_glyph = Snake::get_body_glyph_from_directions(to, from);
-            let (y_to_set, x_to_set) = window[1];
-            self.rendered[y_to_set][x_to_set] = joining_glyph;
-        }
-    }
-
-    fn render_snake_tail(&mut self) {
-        let relevant_points: Vec<_> = self
-            .snake
-            .body
-            .iter()
-            .rev()
-            .take(2)
-            .rev()
-            .cloned()
-            .collect();
-        let direction = Snake::direction(relevant_points[0], relevant_points[1]);
-        let (y, x) = self.snake.body.back().unwrap();
-        let glyph = match direction {
-            Direction::Up | Direction::Down => '║',
-            Direction::Right | Direction::Left => '═',
-        };
-        self.rendered[*y][*x] = glyph;
-    }
-
-    fn render_apples(&mut self) {
-        for apple in &self.apples {
-            let (y, x) = apple.location;
-            self.rendered[y][x] = 'O';
         }
     }
 
@@ -156,37 +77,25 @@ impl Game {
             _ => None,
         }
     }
-
-    #[cfg(test)]
-    pub fn render_to_string(&mut self) -> String {
-        self.render();
-        self.rendered
-            .iter()
-            .map(|row| row.iter().collect::<String>())
-            .fold(String::new(), |mut init, add| {
-                init.push_str(&add);
-                init.push_str("\n");
-                init
-            })
-    }
 }
 
-// fn main() -> Result<(), Box<dyn Error>> {
-//     let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
-//     game.apples = HashSet::new();
-//     game.apples.insert(Apple { location: (4, 4) });
-//     game.apples.insert(Apple { location: (9, 9) });
-//     game.apples.insert(Apple { location: (9, 10) });
-//
-//     loop_game(game);
-//     #[allow(unreachable_code)]
-//     Ok(())
-// }
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut game = Game::new(20, 20, &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]);
+    game.apples = HashSet::new();
+    game.apples.insert(Apple { location: (4, 4) });
+    game.apples.insert(Apple { location: (9, 9) });
+    game.apples.insert(Apple { location: (9, 10) });
+
+    loop_game(game);
+    #[allow(unreachable_code)]
+    Ok(())
+}
 
 fn loop_game(mut game: Game) -> ! {
     let mut line = String::new();
+    let mut rendered = vec![vec![' '; game.width]; game.height];
     loop {
-        game.render_with_border();
+        game.print(&mut rendered);
         let _ = stdin().read_line(&mut line).unwrap();
         if !line.is_empty() {
             if let Some(direction) =
@@ -198,11 +107,6 @@ fn loop_game(mut game: Game) -> ! {
         }
         game.advance();
     }
-}
-
-#[cfg(test)]
-fn count_board_squares(game: Game) -> usize {
-    game.rendered.iter().fold(0, |tot, row| tot + row.len())
 }
 
 #[test]
@@ -353,6 +257,7 @@ fn test_drawing_turning_snakes() {
 }
 
 use crate::pretty_rendering::debug_mesh::DebugMesh;
+use crate::print_rendering::Printable;
 use ggez::conf::WindowMode;
 use ggez::event;
 use ggez::event::quit;
@@ -386,7 +291,6 @@ impl MainState {
                 apples,
                 width: 20,
                 height: 20,
-                rendered: vec![],
                 last_advance: Instant::now(),
             },
         };
@@ -466,14 +370,14 @@ impl event::EventHandler for MainState {
     }
 }
 
-pub fn main() -> ggez::GameResult {
-    let window_size = (600.0, 600.0);
-    let cb = ggez::ContextBuilder::new("snakin'", "Rups").window_mode(WindowMode {
-        width: window_size.0,
-        height: window_size.1,
-        ..Default::default()
-    });
-    let (ctx, event_loop) = &mut cb.build()?;
-    let state = &mut MainState::new(window_size)?;
-    event::run(ctx, event_loop, state)
-}
+// pub fn main() -> ggez::GameResult {
+//     let window_size = (600.0, 600.0);
+//     let cb = ggez::ContextBuilder::new("snakin'", "Rups").window_mode(WindowMode {
+//         width: window_size.0,
+//         height: window_size.1,
+//         ..Default::default()
+//     });
+//     let (ctx, event_loop) = &mut cb.build()?;
+//     let state = &mut MainState::new(window_size)?;
+//     event::run(ctx, event_loop, state)
+// }
