@@ -1,7 +1,5 @@
 use crate::print_rendering::Printable;
-
 use crate::Apple;
-
 use std::collections::HashSet;
 
 impl Printable for HashSet<Apple> {

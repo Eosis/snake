@@ -1,5 +1,4 @@
 use crate::print_rendering::Printable;
-
 use crate::Game;
 
 impl Printable for Game {

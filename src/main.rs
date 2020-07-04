@@ -1,21 +1,17 @@
 pub mod pretty_rendering;
 pub mod print_rendering;
 pub mod snake;
-
 use crate::pretty_rendering::ggez_main;
 use crate::print_rendering::stringy_main;
 use crate::snake::{Direction, Snake};
 use std::collections::{HashSet, VecDeque};
 use std::env;
-
 use ggez::input::keyboard::KeyCode;
-use std::time::Instant;
 
 struct Game {
     pub snake: Snake,
     pub apples: HashSet<Apple>,
     pub width: usize,
-    pub last_advance: Instant,
     #[allow(dead_code)]
     height: usize,
 }
@@ -50,7 +46,6 @@ impl Game {
             apples: HashSet::new(),
             width,
             height,
-            last_advance: Instant::now(),
         }
     }
 

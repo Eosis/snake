@@ -19,6 +19,7 @@ use std::time::Instant;
 struct MainState {
     window_size: (f32, f32),
     game: Game,
+    last_advance: Instant,
 }
 
 impl MainState {
@@ -40,8 +41,8 @@ impl MainState {
                 apples,
                 width: 20,
                 height: 20,
-                last_advance: Instant::now(),
             },
+            last_advance: Instant::now(),
         };
         Ok(s)
     }
@@ -65,9 +66,9 @@ const DEBUG: bool = true;
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
-        if self.game.last_advance.elapsed().as_secs_f32() >= 0.5 {
+        if self.last_advance.elapsed().as_secs_f32() >= 0.5 {
             self.game.advance();
-            self.game.last_advance = Instant::now();
+            self.last_advance = Instant::now();
         }
         Ok(())
     }
