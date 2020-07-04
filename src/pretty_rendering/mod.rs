@@ -16,6 +16,8 @@ use ggez::nalgebra as na;
 use std::collections::{HashSet, VecDeque};
 use std::time::Instant;
 
+const DEBUG: bool = true;
+
 struct MainState {
     window_size: (f32, f32),
     game: Game,
@@ -62,7 +64,15 @@ impl MainState {
     }
 }
 
-const DEBUG: bool = true;
+fn get_snake_direction_from_keypress(input: KeyCode) -> Option<Direction> {
+    match input {
+        KeyCode::Up => Some(Direction::Up),
+        KeyCode::Right => Some(Direction::Right),
+        KeyCode::Down => Some(Direction::Down),
+        KeyCode::Left => Some(Direction::Left),
+        _ => None,
+    }
+}
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
@@ -109,7 +119,7 @@ impl event::EventHandler for MainState {
     ) {
         match keycode {
             KeyCode::Up | KeyCode::Right | KeyCode::Down | KeyCode::Left => {
-                let new_dir = Game::get_snake_direction_from_keypress(keycode).unwrap();
+                let new_dir = get_snake_direction_from_keypress(keycode).unwrap();
                 self.game.snake.direction = new_dir;
             }
             KeyCode::Escape => {

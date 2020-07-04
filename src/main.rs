@@ -3,10 +3,9 @@ pub mod print_rendering;
 pub mod snake;
 use crate::pretty_rendering::ggez_main;
 use crate::print_rendering::stringy_main;
-use crate::snake::{Direction, Snake};
+use crate::snake::Snake;
 use std::collections::{HashSet, VecDeque};
 use std::env;
-use ggez::input::keyboard::KeyCode;
 
 struct Game {
     pub snake: Snake,
@@ -55,26 +54,6 @@ impl Game {
         if self.apples.contains(&Apple { location: head }) {
             self.snake.lengthening = true;
             self.apples.remove(&Apple { location: head });
-        }
-    }
-
-    fn set_snake_direction_from_input(input: char) -> Option<Direction> {
-        match input {
-            'w' => Some(Direction::Up),
-            'a' => Some(Direction::Left),
-            's' => Some(Direction::Down),
-            'd' => Some(Direction::Right),
-            _ => None,
-        }
-    }
-
-    fn get_snake_direction_from_keypress(input: KeyCode) -> Option<Direction> {
-        match input {
-            KeyCode::Up => Some(Direction::Up),
-            KeyCode::Right => Some(Direction::Right),
-            KeyCode::Down => Some(Direction::Down),
-            KeyCode::Left => Some(Direction::Left),
-            _ => None,
         }
     }
 }

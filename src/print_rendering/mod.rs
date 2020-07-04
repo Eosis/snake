@@ -1,13 +1,15 @@
+pub mod printable_apples;
+pub mod printable_game;
+pub mod printable_snake;
+
 use crate::{Apple, Game};
 use std::collections::HashSet;
 use std::io::stdin;
 
-#[cfg(test)]
-use crate::snake::{Direction, Snake};
+use crate::snake::Direction;
 
-pub mod printable_apples;
-pub mod printable_game;
-pub mod printable_snake;
+#[cfg(test)]
+use crate::snake::Snake;
 
 pub trait Printable {
     fn print(&mut self, rendered: &mut Vec<Vec<char>>);
@@ -25,6 +27,16 @@ pub fn stringy_main() -> Result<(), ()> {
     Ok(())
 }
 
+fn get_snake_direction_from_input(input: char) -> Option<Direction> {
+    match input {
+        'w' => Some(Direction::Up),
+        'a' => Some(Direction::Left),
+        's' => Some(Direction::Down),
+        'd' => Some(Direction::Right),
+        _ => None,
+    }
+}
+
 fn loop_game(mut game: Game) -> ! {
     let mut line = String::new();
     let mut rendered = vec![vec![' '; game.width]; game.height];
@@ -33,7 +45,7 @@ fn loop_game(mut game: Game) -> ! {
         let _ = stdin().read_line(&mut line).unwrap();
         if !line.is_empty() {
             if let Some(direction) =
-                Game::set_snake_direction_from_input(line.chars().next().unwrap())
+                get_snake_direction_from_input(line.chars().next().unwrap())
             {
                 game.snake.direction = direction;
             }
