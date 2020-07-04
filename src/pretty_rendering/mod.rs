@@ -104,8 +104,8 @@ impl event::EventHandler for MainState {
         self.draw_border(ctx)?;
         if DEBUG {
             let mesh = DebugMesh {
-                rows: self.game.snake.confines.0,
-                columns: self.game.snake.confines.1,
+                rows: self.game.snake.confines.0 as usize,
+                columns: self.game.snake.confines.1 as usize,
                 container,
             };
             mesh.draw(ctx, DrawParam::default().dest(play_area))?;

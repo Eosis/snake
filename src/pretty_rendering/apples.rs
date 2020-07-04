@@ -7,15 +7,11 @@ use std::collections::HashSet;
 pub struct Apples<'a> {
     inner: &'a HashSet<crate::Apple>,
     container: Rect,
-    confines: (usize, usize),
+    confines: (i32, i32),
 }
 
 impl<'a> Apples<'a> {
-    pub fn new(
-        inner: &'a HashSet<crate::Apple>,
-        container: Rect,
-        confines: (usize, usize),
-    ) -> Self {
+    pub fn new(inner: &'a HashSet<crate::Apple>, container: Rect, confines: (i32, i32)) -> Self {
         Apples {
             inner,
             container,

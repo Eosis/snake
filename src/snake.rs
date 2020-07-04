@@ -11,8 +11,8 @@ pub enum Direction {
 pub struct Snake {
     pub direction: Direction,
     pub lengthening: bool,
-    pub body: VecDeque<(usize, usize)>,
-    pub confines: (usize, usize),
+    pub body: VecDeque<(i32, i32)>,
+    pub confines: (i32, i32),
     pub confines_size: (f32, f32),
 }
 
@@ -25,7 +25,7 @@ impl Snake {
     }
 
     #[allow(dead_code)]
-    pub fn from_body(body: &[(usize, usize)]) -> Self {
+    pub fn from_body(body: &[(i32, i32)]) -> Self {
         Snake {
             body: VecDeque::from(Vec::from(body)),
             direction: Snake::head_direction(body.iter()),
@@ -37,9 +37,8 @@ impl Snake {
 
     pub fn advance(&mut self) {
         let (dy, dx) = Snake::advancement_to_add(&self.direction);
-        let first = self.body.front().unwrap();
-        let (y, x) = (first.0 as i32, first.1 as i32);
-        let new = ((y + dy) as usize, (x + dx) as usize);
+        let (y, x) = self.body.front().unwrap();
+        let new = ((*y + dy), (*x + dx));
         self.body.push_front(new);
         if self.lengthening {
             self.lengthening = false;
@@ -96,17 +95,12 @@ impl Snake {
         }
     }
 
-    pub fn head_direction<'a, T: Iterator<Item = &'a (usize, usize)>>(body_iter: T) -> Direction {
+    pub fn head_direction<'a, T: Iterator<Item = &'a (i32, i32)>>(body_iter: T) -> Direction {
         let start_copy: Vec<_> = body_iter.take(2).collect();
         Snake::direction(*start_copy[0], *start_copy[1])
     }
 
-    pub fn direction(
-        (now_y, now_x): (usize, usize),
-        (then_y, then_x): (usize, usize),
-    ) -> Direction {
-        let (now_y, now_x) = Self::point_helper((now_y, now_x));
-        let (then_y, then_x) = Self::point_helper((then_y, then_x));
+    pub fn direction((now_y, now_x): (i32, i32), (then_y, then_x): (i32, i32)) -> Direction {
         match (now_y - then_y, now_x - then_x) {
             (-1, 0) => Direction::Up,
             (1, 0) => Direction::Down,
@@ -114,9 +108,5 @@ impl Snake {
             (0, -1) => Direction::Left,
             x => panic!("Invalid direction determined: {:?}", x),
         }
-    }
-
-    fn point_helper(point: (usize, usize)) -> (i32, i32) {
-        (point.0 as i32, point.1 as i32)
     }
 }

@@ -1,6 +1,6 @@
 use ggez::graphics::mint;
 
-pub fn tuple_to_f32(tuple: &(usize, usize)) -> (f32, f32) {
+pub fn tuple_to_f32(tuple: &(i32, i32)) -> (f32, f32) {
     (tuple.0 as f32, tuple.1 as f32)
 }
 

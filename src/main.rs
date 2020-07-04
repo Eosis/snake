@@ -18,7 +18,7 @@ struct Game {
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct Apple {
-    location: (usize, usize),
+    location: (i32, i32),
 }
 
 impl Game {
@@ -26,22 +26,10 @@ impl Game {
         Game {
             over: false,
             snake: Snake {
-                body: VecDeque::from(
-                    Vec::from(snake_body)
-                        .iter()
-                        .map(|(y, x)| (*y as usize, *x as usize))
-                        .collect::<Vec<_>>(),
-                ),
+                body: VecDeque::from(Vec::from(snake_body)),
                 lengthening: false,
-                direction: Snake::head_direction(
-                    snake_body
-                        .iter()
-                        .take(2)
-                        .map(|(y, x)| (*y as usize, *x as usize))
-                        .collect::<Vec<_>>()
-                        .iter(),
-                ),
-                confines: (height, width),
+                direction: Snake::head_direction(snake_body.iter().take(2)),
+                confines: (height as i32, width as i32),
                 confines_size: (550.0, 550.0),
             },
             apples: HashSet::new(),

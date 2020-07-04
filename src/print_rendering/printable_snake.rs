@@ -20,7 +20,7 @@ impl Snake {
             Direction::Down => 'v',
             Direction::Left => '<',
         };
-        rendered[y][x] = glyph;
+        rendered[y as usize][x as usize] = glyph;
     }
 
     fn render_snake_body(&mut self, rendered: &mut Vec<Vec<char>>) {
@@ -29,7 +29,7 @@ impl Snake {
             let from = Snake::direction(window[1], window[2]);
             let joining_glyph = Snake::get_body_glyph_from_directions(to, from);
             let (y_to_set, x_to_set) = window[1];
-            rendered[y_to_set][x_to_set] = joining_glyph;
+            rendered[y_to_set as usize][x_to_set as usize] = joining_glyph;
         }
     }
 
@@ -41,6 +41,6 @@ impl Snake {
             Direction::Up | Direction::Down => '║',
             Direction::Right | Direction::Left => '═',
         };
-        rendered[*y][*x] = glyph;
+        rendered[*y as usize][*x as usize] = glyph;
     }
 }

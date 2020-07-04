@@ -6,7 +6,7 @@ impl Printable for HashSet<Apple> {
     fn print(&mut self, rendered: &mut Vec<Vec<char>>) {
         for apple in self.iter() {
             let (y, x) = apple.location;
-            rendered[y][x] = 'O';
+            rendered[y as usize][x as usize] = 'O';
         }
     }
 }

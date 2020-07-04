@@ -83,7 +83,7 @@ impl Snake {
     }
 
     fn body_pos_to_na_point(
-        (y, x): (usize, usize),
+        (y, x): (i32, i32),
         x_interval: f32,
         y_interval: f32,
     ) -> na::Point2<f32> {
