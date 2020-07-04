@@ -110,26 +110,6 @@ fn loop_game(mut game: Game) -> ! {
 }
 
 #[test]
-fn test_creating_boards() {
-    assert_eq!(
-        count_board_squares(Game::new(
-            20,
-            20,
-            &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]
-        )),
-        20 * 20
-    );
-    assert_eq!(
-        count_board_squares(Game::new(
-            50,
-            1,
-            &[(10, 10), (10, 9), (10, 8), (10, 7), (10, 6)]
-        )),
-        50
-    );
-}
-
-#[test]
 fn test_direction() {
     let upwards_body = vec![(9, 10), (10, 10)];
     let downwards_body = vec![(11, 10), (10, 10)];
@@ -152,6 +132,8 @@ fn test_direction() {
 
 #[test]
 fn test_drawing_simple_snakes() {
+    let (default_width, default_height): (usize, usize) = (3, 3);
+    let mut render_to = vec![vec![' '; default_width]; default_height];
     #[rustfmt::skip]
     let correct_upwards = concat!(" ^ \n",
                                         " ║ \n",
@@ -168,53 +150,74 @@ fn test_drawing_simple_snakes() {
     let correct_downwards = concat!(" ║ \n",
                                           " ║ \n",
                                           " v \n");
-    let mut upwards_game = Game::new(3, 3, &[(0, 1), (1, 1), (2, 1)]);
-    assert_eq!(upwards_game.render_to_string(), correct_upwards);
-
-    let mut correct_rightwards_game = Game::new(3, 3, &[(1, 2), (1, 1), (1, 0)]);
+    let mut upwards_game = Game::new(default_width, default_height, &[(0, 1), (1, 1), (2, 1)]);
     assert_eq!(
-        correct_rightwards_game.render_to_string(),
+        upwards_game.render_to_string(&mut render_to),
+        correct_upwards
+    );
+
+    let mut correct_rightwards_game =
+        Game::new(default_width, default_height, &[(1, 2), (1, 1), (1, 0)]);
+    assert_eq!(
+        correct_rightwards_game.render_to_string(&mut render_to),
         correct_rightwards
     );
 
-    let mut leftwards_game = Game::new(3, 3, &[(1, 0), (1, 1), (1, 2)]);
-    assert_eq!(leftwards_game.render_to_string(), correct_leftwards);
+    let mut leftwards_game = Game::new(default_width, default_height, &[(1, 0), (1, 1), (1, 2)]);
+    assert_eq!(
+        leftwards_game.render_to_string(&mut render_to),
+        correct_leftwards
+    );
 
-    let mut downwards_game = Game::new(3, 3, &[(2, 1), (1, 1), (0, 1)]);
-    assert_eq!(downwards_game.render_to_string(), correct_downwards);
+    let mut downwards_game = Game::new(default_width, default_height, &[(2, 1), (1, 1), (0, 1)]);
+    assert_eq!(
+        downwards_game.render_to_string(&mut render_to),
+        correct_downwards
+    );
 }
 
 #[test]
 fn test_drawing_turning_snakes() {
+    let (default_width, default_height): (usize, usize) = (3, 3);
+    let mut render_to = vec![vec![' '; default_width]; default_height];
     #[rustfmt::skip]
     let correct_up_rightwards = concat!(" ╔>\n",
                                               " ║ \n",
                                               " ║ \n");
     let up_rightwards_body = vec![(0, 2), (0, 1), (1, 1), (2, 1)];
-    let mut up_rightwards_game = Game::new(3, 3, &up_rightwards_body);
-    assert_eq!(up_rightwards_game.render_to_string(), correct_up_rightwards);
+    let mut up_rightwards_game = Game::new(default_width, default_height, &up_rightwards_body);
+    assert_eq!(
+        up_rightwards_game.render_to_string(&mut render_to),
+        correct_up_rightwards
+    );
     #[rustfmt::skip]
     let correct_up_leftwards = concat!("<╗ \n",
                                              " ║ \n",
                                              " ║ \n");
     let up_leftwards_body = vec![(0, 0), (0, 1), (1, 1), (2, 1)];
-    let mut up_leftwards_game = Game::new(3, 3, &up_leftwards_body);
-    assert_eq!(up_leftwards_game.render_to_string(), correct_up_leftwards);
+    let mut up_leftwards_game = Game::new(default_width, default_height, &up_leftwards_body);
+    assert_eq!(
+        up_leftwards_game.render_to_string(&mut render_to),
+        correct_up_leftwards
+    );
     #[rustfmt::skip]
     let correct_right_upwards = concat!("  ^\n",
                                               "══╝\n",
                                               "   \n");
     let right_upwards_body = vec![(0, 2), (1, 2), (1, 1), (1, 0)];
-    let mut right_upwards_game = Game::new(3, 3, &right_upwards_body);
-    assert_eq!(right_upwards_game.render_to_string(), correct_right_upwards);
+    let mut right_upwards_game = Game::new(default_width, default_height, &right_upwards_body);
+    assert_eq!(
+        right_upwards_game.render_to_string(&mut render_to),
+        correct_right_upwards
+    );
     #[rustfmt::skip]
     let correct_right_downwards = concat!("   \n",
                                                 "══╗\n",
                                                 "  v\n");
     let right_downwards_body = vec![(2, 2), (1, 2), (1, 1), (1, 0)];
-    let mut right_downwards_game = Game::new(3, 3, &right_downwards_body);
+    let mut right_downwards_game = Game::new(default_width, default_height, &right_downwards_body);
     assert_eq!(
-        right_downwards_game.render_to_string(),
+        right_downwards_game.render_to_string(&mut render_to),
         correct_right_downwards
     );
     #[rustfmt::skip]
@@ -222,16 +225,19 @@ fn test_drawing_turning_snakes() {
                                              "╚══\n",
                                              "   \n");
     let left_upwards_body = vec![(0, 0), (1, 0), (1, 1), (1, 2)];
-    let mut left_upwards_game = Game::new(3, 3, &left_upwards_body);
-    assert_eq!(left_upwards_game.render_to_string(), correct_left_upwards);
+    let mut left_upwards_game = Game::new(default_width, default_height, &left_upwards_body);
+    assert_eq!(
+        left_upwards_game.render_to_string(&mut render_to),
+        correct_left_upwards
+    );
     #[rustfmt::skip]
     let correct_left_downwards = concat!("   \n",
                                                "╔══\n",
                                                "v  \n");
     let left_downwards_body = vec![(2, 0), (1, 0), (1, 1), (1, 2)];
-    let mut left_downwards_game = Game::new(3, 3, &left_downwards_body);
+    let mut left_downwards_game = Game::new(default_width, default_height, &left_downwards_body);
     assert_eq!(
-        left_downwards_game.render_to_string(),
+        left_downwards_game.render_to_string(&mut render_to),
         correct_left_downwards
     );
     #[rustfmt::skip]
@@ -239,9 +245,9 @@ fn test_drawing_turning_snakes() {
                                                " ║ \n",
                                                "<╝ \n");
     let down_leftwards_body = vec![(2, 0), (2, 1), (1, 1), (0, 1)];
-    let mut down_leftwards_game = Game::new(3, 3, &down_leftwards_body);
+    let mut down_leftwards_game = Game::new(default_width, default_height, &down_leftwards_body);
     assert_eq!(
-        down_leftwards_game.render_to_string(),
+        down_leftwards_game.render_to_string(&mut render_to),
         correct_down_leftwards
     );
     #[rustfmt::skip]
@@ -249,16 +255,16 @@ fn test_drawing_turning_snakes() {
                                                 " ║ \n",
                                                 " ╚>\n");
     let down_rightwards_body = vec![(2, 2), (2, 1), (1, 1), (0, 1)];
-    let mut down_rightwards_game = Game::new(3, 3, &down_rightwards_body);
+    let mut down_rightwards_game = Game::new(default_width, default_height, &down_rightwards_body);
     assert_eq!(
-        down_rightwards_game.render_to_string(),
+        down_rightwards_game.render_to_string(&mut render_to),
         correct_down_rightwards
     );
 }
 
 use crate::pretty_rendering::debug_mesh::DebugMesh;
 use crate::print_rendering::Printable;
-use ggez::conf::WindowMode;
+
 use ggez::event;
 use ggez::event::quit;
 use ggez::graphics;

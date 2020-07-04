@@ -1,8 +1,6 @@
-use crate::print_rendering::printable_apples;
 use crate::print_rendering::Printable;
-use crate::snake::Direction;
+
 use crate::Game;
-use crate::Snake;
 
 impl Printable for Game {
     fn print(&mut self, rendered: &mut Vec<Vec<char>>) -> () {
@@ -31,9 +29,9 @@ impl Game {
     }
 
     #[cfg(test)]
-    pub fn render_to_string(&mut self) -> String {
+    pub fn render_to_string(&mut self, rendered: &mut Vec<Vec<char>>) -> String {
         self.render(rendered);
-        self.rendered
+        rendered
             .iter()
             .map(|row| row.iter().collect::<String>())
             .fold(String::new(), |mut init, add| {

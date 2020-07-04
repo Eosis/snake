@@ -1,8 +1,7 @@
 use crate::print_rendering::Printable;
-use crate::snake::Direction;
+
 use crate::Apple;
-use crate::Game;
-use crate::Snake;
+
 use std::collections::HashSet;
 
 impl Printable for HashSet<Apple> {

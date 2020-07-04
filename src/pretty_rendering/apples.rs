@@ -1,5 +1,5 @@
 use crate::pretty_rendering::helpers::add_points;
-use ggez::graphics::{draw, mint, BlendMode, DrawMode, DrawParam, Drawable, Rect};
+use ggez::graphics::{mint, BlendMode, DrawMode, DrawParam, Drawable, Rect};
 use ggez::nalgebra as na;
 use ggez::{graphics, Context, GameResult};
 use std::collections::HashSet;

@@ -1,5 +1,3 @@
-use crate::Game;
-use crate::Snake;
 pub mod printable_apples;
 pub mod printable_game;
 pub mod printable_snake;
