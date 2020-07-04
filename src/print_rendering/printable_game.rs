@@ -3,7 +3,7 @@ use crate::print_rendering::Printable;
 use crate::Game;
 
 impl Printable for Game {
-    fn print(&mut self, rendered: &mut Vec<Vec<char>>) -> () {
+    fn print(&mut self, rendered: &mut Vec<Vec<char>>) {
         self.render(rendered);
         println!("{}", "-".repeat(self.width + 2));
         for row in rendered.iter() {
