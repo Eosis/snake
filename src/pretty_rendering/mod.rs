@@ -33,6 +33,7 @@ impl MainState {
         let s = MainState {
             window_size,
             game: Game {
+                over: false,
                 snake: Snake {
                     direction: Direction::Left,
                     lengthening: false,
@@ -76,8 +77,11 @@ fn get_snake_direction_from_keypress(input: KeyCode) -> Option<Direction> {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
-        if self.last_advance.elapsed().as_secs_f32() >= 0.5 {
+        if self.last_advance.elapsed().as_secs_f32() >= 0.5 && !self.game.over {
             self.game.advance();
+            if self.game.snake.dead() {
+                self.game.over = true;
+            }
             self.last_advance = Instant::now();
         }
         Ok(())

@@ -8,6 +8,7 @@ use std::collections::{HashSet, VecDeque};
 use std::env;
 
 struct Game {
+    pub over: bool,
     pub snake: Snake,
     pub apples: HashSet<Apple>,
     pub width: usize,
@@ -23,6 +24,7 @@ pub struct Apple {
 impl Game {
     pub fn new(width: usize, height: usize, snake_body: &[(i32, i32)]) -> Game {
         Game {
+            over: false,
             snake: Snake {
                 body: VecDeque::from(
                     Vec::from(snake_body)

@@ -44,9 +44,7 @@ fn loop_game(mut game: Game) -> ! {
         game.print(&mut rendered);
         let _ = stdin().read_line(&mut line).unwrap();
         if !line.is_empty() {
-            if let Some(direction) =
-                get_snake_direction_from_input(line.chars().next().unwrap())
-            {
+            if let Some(direction) = get_snake_direction_from_input(line.chars().next().unwrap()) {
                 game.snake.direction = direction;
             }
             line.clear();
