@@ -26,25 +26,9 @@ struct MainState {
 
 impl MainState {
     fn new(window_size: (f32, f32)) -> ggez::GameResult<MainState> {
-        let mut apples = HashSet::new();
-        for apple in &[(1, 0), (2, 0), (3, 0), (4, 0)] {
-            apples.insert(Apple { location: *apple });
-        }
         let s = MainState {
             window_size,
-            game: Game {
-                over: false,
-                snake: Snake {
-                    direction: Direction::Left,
-                    lengthening: false,
-                    body: VecDeque::from(vec![(10, 10), (10, 11), (10, 12), (10, 13), (10, 14)]),
-                    confines: (20, 20),
-                    confines_size: (window_size.0 - 60.0, window_size.1 - 60.0),
-                },
-                apples,
-                width: 20,
-                height: 20,
-            },
+            game: get_starting_game(window_size),
             last_advance: Instant::now(),
         };
         Ok(s)
@@ -87,6 +71,26 @@ fn get_snake_direction_from_keypress(
             _ => Some(Direction::Left),
         },
         _ => None,
+    }
+}
+
+fn get_starting_game(window_size: (f32, f32)) -> Game {
+    let mut apples = HashSet::new();
+    for apple in &[(1, 0), (2, 0), (3, 0), (4, 0)] {
+        apples.insert(Apple { location: *apple });
+    }
+    Game {
+        over: false,
+        snake: Snake {
+            direction: Direction::Left,
+            lengthening: false,
+            body: VecDeque::from(vec![(10, 10), (10, 11), (10, 12), (10, 13), (10, 14)]),
+            confines: (20, 20),
+            confines_size: (window_size.0 - 60.0, window_size.1 - 60.0),
+        },
+        apples,
+        width: 20,
+        height: 20,
     }
 }
 
@@ -143,6 +147,9 @@ impl event::EventHandler for MainState {
                 {
                     self.game.snake.direction = new_dir;
                 }
+            }
+            KeyCode::R => {
+                self.game = get_starting_game(self.window_size);
             }
             KeyCode::Escape => {
                 quit(ctx);
