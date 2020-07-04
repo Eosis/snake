@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Direction {
     Up,
     Right,

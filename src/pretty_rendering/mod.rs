@@ -65,12 +65,27 @@ impl MainState {
     }
 }
 
-fn get_snake_direction_from_keypress(input: KeyCode) -> Option<Direction> {
+fn get_snake_direction_from_keypress(
+    input: KeyCode,
+    current_direction: Direction,
+) -> Option<Direction> {
     match input {
-        KeyCode::Up => Some(Direction::Up),
-        KeyCode::Right => Some(Direction::Right),
-        KeyCode::Down => Some(Direction::Down),
-        KeyCode::Left => Some(Direction::Left),
+        KeyCode::Up => match current_direction {
+            Direction::Down => None,
+            _ => Some(Direction::Up),
+        },
+        KeyCode::Right => match current_direction {
+            Direction::Left => None,
+            _ => Some(Direction::Right),
+        },
+        KeyCode::Down => match current_direction {
+            Direction::Up => None,
+            _ => Some(Direction::Down),
+        },
+        KeyCode::Left => match current_direction {
+            Direction::Right => None,
+            _ => Some(Direction::Left),
+        },
         _ => None,
     }
 }
@@ -123,8 +138,11 @@ impl event::EventHandler for MainState {
     ) {
         match keycode {
             KeyCode::Up | KeyCode::Right | KeyCode::Down | KeyCode::Left => {
-                let new_dir = get_snake_direction_from_keypress(keycode).unwrap();
-                self.game.snake.direction = new_dir;
+                if let Some(new_dir) =
+                    get_snake_direction_from_keypress(keycode, self.game.snake.direction)
+                {
+                    self.game.snake.direction = new_dir;
+                }
             }
             KeyCode::Escape => {
                 quit(ctx);
