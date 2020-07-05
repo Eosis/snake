@@ -1,9 +1,12 @@
+pub mod apple;
 pub mod pretty_rendering;
 pub mod print_rendering;
 pub mod snake;
+use crate::apple::Apple;
 use crate::pretty_rendering::ggez_main;
 use crate::print_rendering::stringy_main;
 use crate::snake::Snake;
+use rand::prelude::*;
 use std::collections::{HashSet, VecDeque};
 use std::env;
 
@@ -16,9 +19,39 @@ struct Game {
     height: usize,
 }
 
-#[derive(PartialEq, Eq, Hash)]
-pub struct Apple {
-    location: (i32, i32),
+struct AvailableSpaces<'a> {
+    width: usize,
+    height: usize,
+    occupied: &'a VecDeque<(i32, i32)>,
+    offset: usize,
+    available: usize,
+}
+
+impl<'a> AvailableSpaces<'a> {
+    fn new(width: usize, height: usize, occupied: &'a VecDeque<(i32, i32)>) -> Self {
+        Self {
+            width,
+            height,
+            occupied,
+            offset: 0,
+            available: width * height - occupied.len(),
+        }
+    }
+}
+
+impl<'a> Iterator for AvailableSpaces<'a> {
+    type Item = (i32, i32);
+    fn next(&mut self) -> Option<(i32, i32)> {
+        while self.offset != self.available {
+            let y: i32 = (self.offset / self.width) as i32;
+            let x: i32 = (self.offset % self.width) as i32;
+            self.offset += 1;
+            if !self.occupied.contains(&(y, x)) {
+                return Some((y, x));
+            }
+        }
+        None
+    }
 }
 
 impl Game {
@@ -45,6 +78,17 @@ impl Game {
             self.snake.lengthening = true;
             self.apples.remove(&Apple { location: head });
         }
+        if self.apples.is_empty() {
+            self.add_new_apple();
+        }
+    }
+
+    fn add_new_apple(&mut self) {
+        let spaces = AvailableSpaces::new(self.width, self.height, &self.snake.body);
+        let mut rng = rand::thread_rng();
+        let location = spaces.choose(&mut rng).unwrap();
+        let location = (location.0 as i32, location.1 as i32);
+        self.apples.insert(Apple { location });
     }
 }
 

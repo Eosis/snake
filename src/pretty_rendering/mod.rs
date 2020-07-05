@@ -75,11 +75,7 @@ fn get_snake_direction_from_keypress(
 }
 
 fn get_starting_game(window_size: (f32, f32)) -> Game {
-    let mut apples = HashSet::new();
-    for apple in &[(1, 0), (2, 0), (3, 0), (4, 0)] {
-        apples.insert(Apple { location: *apple });
-    }
-    Game {
+    let mut game = Game {
         over: false,
         snake: Snake {
             direction: Direction::Left,
@@ -88,10 +84,12 @@ fn get_starting_game(window_size: (f32, f32)) -> Game {
             confines: (20, 20),
             confines_size: (window_size.0 - 60.0, window_size.1 - 60.0),
         },
-        apples,
+        apples: HashSet::new(),
         width: 20,
         height: 20,
-    }
+    };
+    game.add_new_apple();
+    game
 }
 
 impl event::EventHandler for MainState {

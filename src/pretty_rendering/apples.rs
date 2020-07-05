@@ -1,4 +1,5 @@
 use crate::pretty_rendering::helpers::add_points;
+use crate::Game;
 use ggez::graphics::{mint, BlendMode, DrawMode, DrawParam, Drawable, Rect};
 use ggez::nalgebra as na;
 use ggez::{graphics, Context, GameResult};
