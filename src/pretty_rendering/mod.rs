@@ -41,7 +41,7 @@ impl MainState {
             na::Point2::new(w - 15.0, 15.0),
             na::Point2::new(w - 15.0, h - 15.0),
             na::Point2::new(15.0, h - 15.0),
-            na::Point2::new(15.0, 15.0),
+            na::Point2::new(15.0, 15.0 - 2.5), // Fill in remaining 'notch' in top left corner
         ];
         let border = graphics::Mesh::new_line(ctx, &points, 5.0, graphics::WHITE)?;
         graphics::draw(ctx, &border, (na::Point2::new(0.0, 0.0),))?;
