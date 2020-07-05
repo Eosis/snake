@@ -21,7 +21,6 @@ struct Game {
 
 struct AvailableSpaces<'a> {
     width: usize,
-    height: usize,
     occupied: &'a VecDeque<(i32, i32)>,
     offset: usize,
     available: usize,
@@ -31,7 +30,6 @@ impl<'a> AvailableSpaces<'a> {
     fn new(width: usize, height: usize, occupied: &'a VecDeque<(i32, i32)>) -> Self {
         Self {
             width,
-            height,
             occupied,
             offset: 0,
             available: width * height - occupied.len(),

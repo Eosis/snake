@@ -5,7 +5,7 @@ pub mod snake;
 
 use crate::pretty_rendering::debug_mesh::DebugMesh;
 use crate::snake::{Direction, Snake};
-use crate::{pretty_rendering, Apple, Game};
+use crate::{pretty_rendering, Game};
 use ggez::conf::WindowMode;
 use ggez::event;
 use ggez::event::quit;
