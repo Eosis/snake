@@ -36,14 +36,18 @@ impl MainState {
 
     fn draw_border(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let (w, h) = self.window_size;
+        let border = ggez::graphics::Rect::new(30.0, 30.0, w - 60.0, h - 60.0);
+        let line_width = 5.0;
+
         let points = [
-            na::Point2::new(15.0, 15.0),
-            na::Point2::new(w - 15.0, 15.0),
-            na::Point2::new(w - 15.0, h - 15.0),
-            na::Point2::new(15.0, h - 15.0),
-            na::Point2::new(15.0, 15.0 - 2.5), // Fill in remaining 'notch' in top left corner
+            na::Point2::new(border.x, border.y),
+            na::Point2::new(border.x + border.w, border.y),
+            na::Point2::new(border.x + border.w, border.y + border.h),
+            na::Point2::new(border.x, border.y + border.h),
+            na::Point2::new(border.x, border.y - line_width / 2.0), // Fill in remaining 'notch' in top left corner
         ];
-        let border = graphics::Mesh::new_line(ctx, &points, 5.0, graphics::WHITE)?;
+
+        let border = graphics::Mesh::new_line(ctx, &points, line_width, graphics::WHITE)?;
         graphics::draw(ctx, &border, (na::Point2::new(0.0, 0.0),))?;
         Ok(())
     }
