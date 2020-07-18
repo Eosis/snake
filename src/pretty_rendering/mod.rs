@@ -17,6 +17,7 @@ use std::collections::{HashSet, VecDeque};
 use std::time::Instant;
 
 const DEBUG: bool = true;
+const SECONDS_BETWEEN_FRAMES: f32 = 0.2;
 
 struct MainState {
     window_size: (f32, f32),
@@ -98,7 +99,7 @@ fn get_starting_game(window_size: (f32, f32)) -> Game {
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut ggez::Context) -> ggez::GameResult {
-        if self.last_advance.elapsed().as_secs_f32() >= 0.5 && !self.game.over {
+        if self.last_advance.elapsed().as_secs_f32() >= SECONDS_BETWEEN_FRAMES && !self.game.over {
             self.game.advance();
             if self.game.snake.dead() {
                 self.game.over = true;
