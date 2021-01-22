@@ -15,6 +15,7 @@ struct Game {
     pub snake: Snake,
     pub apples: HashSet<Apple>,
     pub width: usize,
+    pub score: u32,
     #[allow(dead_code)]
     height: usize,
 }
@@ -63,6 +64,7 @@ impl Game {
                 confines: (height as i32, width as i32),
                 confines_size: (550.0, 550.0),
             },
+            score: 0,
             apples: HashSet::new(),
             width,
             height,
@@ -73,6 +75,7 @@ impl Game {
         self.snake.advance();
         let head = self.snake.body[0];
         if self.apples.contains(&Apple { location: head }) {
+            self.score += 1;
             self.snake.lengthening = true;
             self.apples.remove(&Apple { location: head });
         }

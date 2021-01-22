@@ -52,6 +52,11 @@ impl MainState {
         graphics::draw(ctx, &border, (na::Point2::new(0.0, 0.0),))?;
         Ok(())
     }
+
+    fn draw_score(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let text = ggez::graphics::Text::new(format!("{:03}", self.game.score));
+        graphics::draw(ctx, &text, (na::Point2::new(self.window_size.0 - 100.0, 0.0 as f32),))
+    }
 }
 
 fn get_snake_direction_from_keypress(
@@ -92,6 +97,7 @@ fn get_starting_game(window_size: (f32, f32)) -> Game {
         apples: HashSet::new(),
         width: 20,
         height: 20,
+        score: 0,
     };
     game.add_new_apple();
     game
@@ -124,6 +130,7 @@ impl event::EventHandler for MainState {
         apples.draw(ctx, DrawParam::default().dest(play_area))?;
 
         self.draw_border(ctx)?;
+        self.draw_score(ctx)?;
         if DEBUG {
             let mesh = DebugMesh {
                 rows: self.game.snake.confines.0 as usize,
