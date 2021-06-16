@@ -10,6 +10,7 @@ use rand::prelude::*;
 use std::collections::{HashSet, VecDeque};
 use std::env;
 
+/// The entire Game's state
 struct Game {
     pub over: bool,
     pub snake: Snake,
@@ -18,18 +19,21 @@ struct Game {
     pub score: u32,
     #[allow(dead_code)]
     height: usize,
+    /// This flag is set when we have changed our direction once in this tick. Further changes will
+    /// be ignored. This prevents a bug where two quick key presses would cause the snake to "run into
+    /// itself".
+    direction_changed_this_tick: bool,
 }
 
 /// This struct will be used as an iterator over all the remaining available spaces in the game.
 #[derive(Clone)]
 struct AvailableSpaces<'a> {
-    /// Width and height of the board to determine the correct space to check ( offset / width, offset % width )
+    /// Width to determine the correct space to check ( offset / width, offset % width )
     width: usize,
+    /// Height to determine the full size of the board (width * height)
     height: usize,
-
     /// A VecDeque containing all the current occupied positions on the board.
     occupied: &'a VecDeque<(i32, i32)>,
-
     /// The current position of our iterator, which represents the current available space being returned.
     offset: usize,
 }
@@ -75,9 +79,11 @@ impl Game {
             apples: HashSet::new(),
             width,
             height,
+            direction_changed_this_tick: false,
         }
     }
 
+    /// Advance the game state, usually called by the Game Engine main loop (every tick).
     pub fn advance(&mut self) {
         self.snake.advance();
         let head = self.snake.body[0];
@@ -89,9 +95,12 @@ impl Game {
         if self.apples.is_empty() {
             self.add_new_apple();
         }
+        self.direction_changed_this_tick = false;
     }
 
+    /// Add a new apple to the Game when none remain on the board.
     fn add_new_apple(&mut self) {
+        // TODO: Improve efficiency of this function (rand's choose is O(N)). I think it could be improved to O(1).
         let spaces = AvailableSpaces::new(self.width, self.height, &self.snake.body);
         let mut rng = rand::thread_rng();
         let location = spaces.choose(&mut rng).unwrap();

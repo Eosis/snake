@@ -9,10 +9,16 @@ pub enum Direction {
 }
 
 pub struct Snake {
+    /// Current direction of the Snake.
     pub direction: Direction,
+    /// If we have just swallowed an Apple or not.
     pub lengthening: bool,
+    /// The locations of the Snake's Body
     pub body: VecDeque<(i32, i32)>,
+    /// The size of the game area (height, width), used in determining if we have crashed into a wall.
     pub confines: (i32, i32),
+    /// The size of the confines as required for the pretty rendering of the game. This should be moved into a
+    /// wrapper type in the pretty rendering module rather than being in this struct (it is only used by this module).
     pub confines_size: (f32, f32),
 }
 
@@ -24,7 +30,7 @@ impl Snake {
             direction: Snake::head_direction(body.iter()),
             confines: (20, 20),
             lengthening: false,
-            confines_size: (550.0, 550.0),
+            confines_size: (550.0, 550.0), // Hard coded to match the walls we are drawing in pretty rendering mode.
         }
     }
 

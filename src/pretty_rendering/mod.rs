@@ -35,6 +35,7 @@ impl MainState {
         Ok(s)
     }
 
+    /// Draw our arena wall (collision with which means a dead Snake).
     fn draw_border(&self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let (w, h) = self.window_size;
         let border = ggez::graphics::Rect::new(30.0, 30.0, w - 60.0, h - 60.0);
@@ -92,12 +93,13 @@ fn get_starting_game(window_size: (f32, f32)) -> Game {
             lengthening: false,
             body: VecDeque::from(vec![(10, 10), (10, 11), (10, 12), (10, 13), (10, 14)]),
             confines: (20, 20),
-            confines_size: (window_size.0 - 60.0, window_size.1 - 60.0),
+            confines_size: (window_size.0 * 9.0 / 10.0, window_size.1 * 9.0 / 10.0),
         },
         apples: HashSet::new(),
         width: 20,
         height: 20,
         score: 0,
+        direction_changed_this_tick: false,
     };
     game.add_new_apple();
     game
@@ -152,10 +154,14 @@ impl event::EventHandler for MainState {
     ) {
         match keycode {
             KeyCode::Up | KeyCode::Right | KeyCode::Down | KeyCode::Left => {
+                if self.game.direction_changed_this_tick {
+                    return;
+                }
                 if let Some(new_dir) =
                     get_snake_direction_from_keypress(keycode, self.game.snake.direction)
                 {
                     self.game.snake.direction = new_dir;
+                    self.game.direction_changed_this_tick = true;
                 }
             }
             KeyCode::R => {
