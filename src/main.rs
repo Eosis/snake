@@ -34,7 +34,7 @@ struct AvailableSpaces<'a> {
     height: usize,
     /// A VecDeque containing all the current occupied positions on the board.
     occupied: &'a VecDeque<(i32, i32)>,
-    /// The current position of our iterator, which represents the current available space being returned.
+    /// Represents the current space being checked for availability.
     offset: usize,
 }
 
