@@ -20,20 +20,27 @@ struct Game {
     height: usize,
 }
 
+/// This struct will be used as an iterator over all the remaining available spaces in the game.
+#[derive(Clone)]
 struct AvailableSpaces<'a> {
+    /// Width and height of the board to determine the correct space to check ( offset / width, offset % width )
     width: usize,
+    height: usize,
+
+    /// A VecDeque containing all the current occupied positions on the board.
     occupied: &'a VecDeque<(i32, i32)>,
+
+    /// The current position of our iterator, which represents the current available space being returned.
     offset: usize,
-    available: usize,
 }
 
 impl<'a> AvailableSpaces<'a> {
     fn new(width: usize, height: usize, occupied: &'a VecDeque<(i32, i32)>) -> Self {
         Self {
             width,
+            height,
             occupied,
             offset: 0,
-            available: width * height - occupied.len(),
         }
     }
 }
@@ -41,7 +48,7 @@ impl<'a> AvailableSpaces<'a> {
 impl<'a> Iterator for AvailableSpaces<'a> {
     type Item = (i32, i32);
     fn next(&mut self) -> Option<(i32, i32)> {
-        while self.offset != self.available {
+        while self.offset != self.width * self.height {
             let y: i32 = (self.offset / self.width) as i32;
             let x: i32 = (self.offset % self.width) as i32;
             self.offset += 1;
@@ -101,5 +108,30 @@ pub fn main() -> Result<(), ()> {
             Ok(_) => Ok(()),
             Err(_) => Err(()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_available_spaces() {
+        // Checking for the 3 x 3 grid (# = occupied)
+        // + - - - +
+        // | . . . |
+        // | # # # |
+        // | . . . |
+        // + - - - +
+        let occupied_spaces = vec![(1, 0), (1, 1), (1, 2)].into();
+        let mut available_spaces = AvailableSpaces::new(3, 3, &occupied_spaces);
+        assert_eq!(available_spaces.clone().count(), 6);
+        assert_eq!(available_spaces.next(), Some((0, 0)));
+        assert_eq!(available_spaces.next(), Some((0, 1)));
+        assert_eq!(available_spaces.next(), Some((0, 2)));
+        assert_eq!(available_spaces.next(), Some((2, 0)));
+        assert_eq!(available_spaces.next(), Some((2, 1)));
+        assert_eq!(available_spaces.next(), Some((2, 2)));
+        assert_eq!(available_spaces.next(), None);
     }
 }

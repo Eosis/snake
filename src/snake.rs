@@ -17,13 +17,6 @@ pub struct Snake {
 }
 
 impl Snake {
-    pub fn intervals(&self) -> (f32, f32) {
-        (
-            self.confines_size.0 / self.confines.0 as f32,
-            self.confines_size.1 / self.confines.1 as f32,
-        )
-    }
-
     #[allow(dead_code)]
     pub fn from_body(body: &[(i32, i32)]) -> Self {
         Snake {
@@ -49,8 +42,15 @@ impl Snake {
 
     pub fn dead(&self) -> bool {
         let (y, x) = self.body.front().unwrap();
-        let (y, x) = (*y as i32, *x as i32);
-        self.dead_at((y, x))
+        *y < 0
+            || *x < 0
+            || *y >= self.confines.0 as i32
+            || *x >= self.confines.1 as i32
+            || self
+            .body
+            .iter()
+            .skip(1)
+            .any(|pos| *pos == (*y, *x))
     }
 
     fn advancement_to_add(direction: &Direction) -> (i32, i32) {
@@ -60,18 +60,6 @@ impl Snake {
             Direction::Down => (1, 0),
             Direction::Left => (0, -1),
         }
-    }
-
-    fn dead_at(&self, (y, x): (i32, i32)) -> bool {
-        y < 0
-            || x < 0
-            || y >= self.confines.0 as i32
-            || x >= self.confines.1 as i32
-            || self
-                .body
-                .iter()
-                .skip(1)
-                .any(|pos| (pos.0 as i32, pos.1 as i32) == (y, x))
     }
 
     pub fn get_body_glyph_from_directions(to: Direction, from: Direction) -> char {
